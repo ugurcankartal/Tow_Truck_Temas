@@ -1,0 +1,31 @@
+[Unit]
+Description=Temas Oto Yol Yardim — Django REST API (Gunicorn WSGI)
+Documentation=https://docs.djangoproject.com/en/stable/howto/deployment/wsgi/gunicorn/
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+WorkingDirectory=/var/www/temasotoyolyardim/backend
+EnvironmentFile=-/var/www/temasotoyolyardim/backend/.env
+Environment=DJANGO_SETTINGS_MODULE=config.settings.prod
+Environment=APP_ROOT=/var/www/temasotoyolyardim
+
+ExecStart=/var/www/temasotoyolyardim/venv/bin/gunicorn \
+    --config /var/www/temasotoyolyardim/deploy/gunicorn/temasotoyolyardim.py \
+    config.wsgi:application
+
+RuntimeDirectory=temasotoyolyardim
+RuntimeDirectoryMode=0750
+
+Restart=on-failure
+RestartSec=5
+
+# Büyük dosya yüklemeleri (nginx client_max_body_size ile uyumlu)
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

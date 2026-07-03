@@ -1,0 +1,247 @@
+---
+import type { BusinessView, ShowcaseServices, ShowcaseStat, SiteFaq } from '@/lib/site-settings';
+import { apiUrl } from '@/lib/site-settings';
+import type { Locale, UiMessages } from '@/i18n';
+
+interface Props {
+  business: BusinessView;
+  faqs: SiteFaq[];
+  showcaseStats: ShowcaseStat[];
+  showcaseServices: ShowcaseServices;
+  locale: Locale;
+  ui: UiMessages;
+}
+
+const { business, faqs, showcaseStats, showcaseServices, locale, ui } = Astro.props;
+const fullAddress = `${business.address.street}, ${business.address.district}, ${business.address.city}`;
+const contactApiUrl = `${apiUrl('contact/')}?lang=${locale}`;
+const formMessages = {
+  sending: ui.services.sending,
+  success: ui.services.success,
+  error: ui.services.error,
+  errorFallback: `${ui.services.errorFallback} ${business.phone}`,
+};
+---
+
+<section
+  class="flex min-h-[100dvh] w-screen flex-col bg-white"
+  aria-label={ui.services.sectionAria}
+>
+  <div class="mx-auto w-full max-w-7xl px-6 py-16 lg:px-10 lg:py-20">
+    <!-- Stats -->
+    <div class="mb-12 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+      {showcaseStats.map((stat) => (
+        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-6 text-center">
+          <p class="font-display text-3xl font-extrabold text-amber-500 lg:text-4xl">{stat.value}</p>
+          <p class="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Services -->
+    <div id="hizmetler" class="scroll-mt-[var(--site-header-total)] mb-12">
+      <span class="text-xs font-semibold tracking-widest text-amber-600 uppercase">{showcaseServices.badge}</span>
+      <h2 class="mt-2 font-display text-3xl font-bold text-slate-900 lg:text-4xl">
+        {showcaseServices.title}
+      </h2>
+      <div
+        class="showcase-services-desc mt-3 max-w-2xl text-slate-600"
+        set:html={showcaseServices.description_html}
+      />
+
+      <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {showcaseServices.items.map((service) => (
+          <article class="group rounded-2xl border border-slate-100 p-6 transition-all hover:border-amber-200 hover:shadow-lg hover:shadow-amber-500/5">
+            <span class="text-3xl" aria-hidden="true">{service.icon}</span>
+            <h3 class="mt-4 font-display text-lg font-bold text-slate-900">{service.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600">{service.description}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+
+    <!-- FAQ + Contact grid -->
+    <div class="grid gap-12 lg:grid-cols-2">
+      <!-- FAQ (GEO optimized) -->
+      <div id="sss" class="scroll-mt-[var(--site-header-total)]">
+        <span class="text-xs font-semibold tracking-widest text-amber-600 uppercase">{ui.services.faqBadge}</span>
+        <h2 class="mt-2 font-display text-2xl font-bold text-slate-900 lg:text-3xl">
+          {ui.services.faqTitle}
+        </h2>
+        <div class="mt-6 flex flex-col gap-3">
+          {faqs.map((faq, i) => (
+            <details class="group rounded-xl border border-slate-100 bg-slate-50 open:bg-white open:shadow-sm" open={i === 0}>
+              <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-800 marker:content-none">
+                <span class="flex items-center justify-between gap-4">
+                  {faq.question}
+                  <span class="shrink-0 text-amber-500 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+                </span>
+              </summary>
+              <div class="px-5 pb-4 text-sm leading-relaxed text-slate-600">
+                {faq.answer}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div id="iletisim" class="flex scroll-mt-[var(--site-header-total)] flex-col">
+        <span class="text-xs font-semibold tracking-widest text-amber-600 uppercase">{ui.services.contactBadge}</span>
+        <h2 class="mt-2 font-display text-2xl font-bold text-slate-900 lg:text-3xl">
+          {ui.services.contactTitle}
+        </h2>
+
+        <address class="mt-6 flex flex-1 flex-col gap-5 not-italic">
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
+            <p class="text-xs font-semibold tracking-widest text-slate-400 uppercase">{ui.services.phone}</p>
+            <a href={business.phoneHref} class="mt-1 block font-display text-2xl font-bold text-slate-900 hover:text-amber-600">
+              {business.phone}
+            </a>
+            <p class="mt-1 text-sm text-slate-500">{ui.services.phoneHint}</p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
+              <p class="text-xs font-semibold tracking-widest text-slate-400 uppercase">{ui.services.email}</p>
+              <a href={`mailto:${business.email}`} class="mt-1 block text-sm font-semibold text-slate-800 hover:text-amber-600">
+                {business.email}
+              </a>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
+              <p class="text-xs font-semibold tracking-widest text-slate-400 uppercase">{ui.services.hours}</p>
+              <p class="mt-1 text-sm font-semibold text-slate-800">{business.openingHours}</p>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
+            <p class="text-xs font-semibold tracking-widest text-slate-400 uppercase">{ui.services.address}</p>
+            <p class="mt-1 text-sm font-medium text-slate-800">{fullAddress}</p>
+            <p class="mt-1 text-sm text-slate-500">{business.address.region}</p>
+          </div>
+        </address>
+
+        <!-- Contact form (Django REST entegrasyonu için hazır) -->
+        <form
+          id="contact-form"
+          class="mt-6 flex flex-col gap-4"
+          action={contactApiUrl}
+          method="POST"
+          data-api-form
+          data-msg-sending={formMessages.sending}
+          data-msg-success={formMessages.success}
+          data-msg-error={formMessages.error}
+          data-msg-error-fallback={formMessages.errorFallback}
+        >
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-slate-600">{ui.services.name}</span>
+              <input
+                type="text"
+                name="name"
+                required
+                class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                placeholder={ui.services.namePlaceholder}
+              />
+            </label>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-slate-600">{ui.services.phone}</span>
+              <input
+                type="tel"
+                name="phone"
+                required
+                class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                placeholder={ui.services.phonePlaceholder}
+              />
+            </label>
+          </div>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-slate-600">{ui.services.message}</span>
+            <textarea
+              name="message"
+              rows="3"
+              required
+              class="resize-none rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+              placeholder={ui.services.messagePlaceholder}
+            ></textarea>
+          </label>
+          <button
+            type="submit"
+            class="rounded-full bg-amber-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
+          >
+            {ui.services.submit}
+          </button>
+          <p id="form-status" class="hidden text-sm" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .showcase-services-desc :global(p) {
+    margin: 0;
+  }
+  .showcase-services-desc :global(p + p) {
+    margin-top: 0.75rem;
+  }
+  .showcase-services-desc :global(strong) {
+    font-weight: 600;
+    color: rgb(15 23 42);
+  }
+  .showcase-services-desc :global(a) {
+    color: rgb(217 119 6);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+</style>
+
+<script>
+  function initContactForm() {
+    const form = document.querySelector('[data-api-form]') as HTMLFormElement;
+    const status = document.getElementById('form-status');
+    if (!form || !status) return;
+    if (form.dataset.contactBound === 'true') return;
+    form.dataset.contactBound = 'true';
+
+    const msgSending = form.dataset.msgSending || 'Sending...';
+    const msgSuccess = form.dataset.msgSuccess || 'Message received.';
+    const msgError = form.dataset.msgError || 'Could not send.';
+    const msgErrorFallback = form.dataset.msgErrorFallback || msgError;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+
+      status.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
+      status.textContent = msgSending;
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            name: data.get('name'),
+            phone: data.get('phone'),
+            message: data.get('message'),
+          }),
+        });
+
+        if (res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          status.textContent = payload.detail || msgSuccess;
+          status.classList.add('text-emerald-600');
+          form.reset();
+        } else {
+          throw new Error(msgError);
+        }
+      } catch {
+        status.textContent = msgErrorFallback;
+        status.classList.add('text-red-600');
+      }
+    });
+  }
+
+  initContactForm();
+  document.addEventListener('astro:page-load', initContactForm);
+</script>

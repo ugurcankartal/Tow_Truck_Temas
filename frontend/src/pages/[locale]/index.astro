@@ -1,0 +1,24 @@
+---
+import SitePage from '@/components/SitePage.astro';
+import { getDefaultLanguageCode, getLanguages } from '@/lib/i18n-api';
+import type { Locale } from '@/i18n';
+
+export async function getStaticPaths() {
+  const languages = await getLanguages();
+  const defaultLocale = getDefaultLanguageCode(languages);
+  return languages
+    .filter((lang) => lang.code !== defaultLocale)
+    .map((lang) => ({
+      params: { locale: lang.code },
+      props: {
+        locale: lang.code as Locale,
+        languages,
+        defaultLocale,
+      },
+    }));
+}
+
+const { locale, languages, defaultLocale } = Astro.props;
+---
+
+<SitePage locale={locale} languages={languages} defaultLocale={defaultLocale} />

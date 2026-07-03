@@ -1,0 +1,13 @@
+# English translations for API messages
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Mesajınız alındı. En kısa sürede dönüş yapacağız."
+msgstr "Your message has been received. We will get back to you shortly."
+
+msgid "Geçerli bir telefon numarası girin."
+msgstr "Please enter a valid phone number."
+
+msgid "Aktif Hizmet"
+msgstr "Active Service"

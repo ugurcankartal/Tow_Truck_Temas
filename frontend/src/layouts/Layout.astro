@@ -1,0 +1,84 @@
+---
+import '@/styles/global.css';
+import JsonLd from '@/components/JsonLd.astro';
+import { localePath, ogLocaleFor, type LanguageInfo, type Locale } from '@/i18n';
+import { getFaviconMimeType } from '@/lib/site-settings';
+import type { SiteSettingsResponse } from '@/lib/site-settings';
+
+interface Props {
+  site: SiteSettingsResponse;
+  locale: Locale;
+  languages: LanguageInfo[];
+  defaultLocale: Locale;
+}
+
+const { site, locale, languages, defaultLocale } = Astro.props;
+const { seo, business } = site;
+const faviconHref = seo.favicon_url || '/favicon.svg';
+const faviconType = getFaviconMimeType(faviconHref);
+const siteBase = (seo.site_url || seo.canonical_url || '').replace(/\/$/, '');
+const activeLanguages = languages.filter((l) => l.is_active);
+const defaultLang = activeLanguages.find((l) => l.is_default) ?? activeLanguages[0];
+const alternateLanguages = activeLanguages.filter((l) => l.code !== locale);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{seo.title}</title>
+    <meta name="description" content={seo.description} />
+    {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+    <meta name="robots" content={seo.robots} />
+    <link rel="canonical" href={seo.canonical_url} />
+    {
+      activeLanguages.map((lang) => (
+        <link
+          rel="alternate"
+          hreflang={lang.code}
+          href={`${siteBase}${localePath(lang.code, defaultLocale)}`}
+        />
+      ))
+    }
+    {defaultLang && (
+      <link
+        rel="alternate"
+        hreflang="x-default"
+        href={`${siteBase}${localePath(defaultLang.code, defaultLocale)}`}
+      />
+    )}
+    <link rel="icon" type={faviconType} href={faviconHref} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={seo.canonical_url} />
+    <meta property="og:title" content={seo.title} />
+    <meta property="og:description" content={seo.description} />
+    <meta property="og:locale" content={ogLocaleFor(locale)} />
+    {alternateLanguages.map((lang) => (
+      <meta property="og:locale:alternate" content={ogLocaleFor(lang.code)} />
+    ))}
+    <meta property="og:site_name" content={business.name} />
+    {seo.og_image_url && <meta property="og:image" content={seo.og_image_url} />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={seo.title} />
+    <meta name="twitter:description" content={seo.description} />
+    {seo.og_image_url && <meta name="twitter:image" content={seo.og_image_url} />}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <JsonLd schema={site.json_ld} />
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

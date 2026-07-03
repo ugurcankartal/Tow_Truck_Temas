@@ -1,0 +1,39 @@
+---
+import type { BusinessView } from '@/lib/site-settings';
+
+interface Props {
+  business: BusinessView;
+  variant?: 'nav' | 'footer';
+}
+
+const { business, variant = 'nav' } = Astro.props;
+const initial = business.name.trim().charAt(0).toUpperCase() || 'Ç';
+
+const fallbackClass =
+  variant === 'nav'
+    ? 'flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-lg font-bold text-white shadow-lg shadow-amber-500/30 transition-transform group-hover:scale-105'
+    : 'flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-lg font-bold text-white';
+
+const logoClass =
+  variant === 'nav'
+    ? 'flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/80 transition-transform group-hover:scale-105'
+    : 'flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white p-1 ring-1 ring-slate-700/50';
+---
+
+{business.logoUrl ? (
+  <span class={logoClass} aria-hidden="true">
+    <img
+      src={business.logoUrl}
+      alt=""
+      class="h-full w-full object-contain"
+      width="40"
+      height="40"
+      loading="eager"
+      decoding="async"
+    />
+  </span>
+) : (
+  <span class={fallbackClass} aria-hidden="true">
+    {initial}
+  </span>
+)}

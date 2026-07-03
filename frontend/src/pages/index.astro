@@ -1,0 +1,9 @@
+---
+import SitePage from '@/components/SitePage.astro';
+import { getDefaultLanguageCode, getLanguages } from '@/lib/i18n-api';
+
+const languages = await getLanguages();
+const defaultLocale = getDefaultLanguageCode(languages);
+---
+
+<SitePage locale={defaultLocale} languages={languages} defaultLocale={defaultLocale} />

@@ -1,0 +1,176 @@
+---
+import type { ScrollDrawImage } from '@/lib/site-settings';
+import { repairIcons } from '@/data/repair-icons';
+import type { UiMessages } from '@/i18n';
+
+interface Props {
+  images: ScrollDrawImage[];
+  ui: UiMessages;
+}
+
+const { images, ui } = Astro.props;
+const panelCount = images.length || 1;
+const sectionHeight = `calc(${panelCount} * (100dvh - var(--site-header-total)))`;
+const stickyHeight = 'calc(100dvh - var(--site-header-total))';
+---
+
+<section
+  id="gorsel-sunum"
+  class="scroll-draw-section relative w-screen"
+  style={`height: ${sectionHeight}`}
+  aria-label={ui.scrollDraw.aria}
+  data-scroll-draw
+  data-panel-count={panelCount}
+>
+  <div
+    class="scroll-draw-sticky sticky top-[var(--site-header-total)] w-screen overflow-hidden bg-slate-900"
+    style={`height: ${stickyHeight}`}
+  >
+    <div class="scroll-draw-stack relative h-full w-full">
+      {images.map((item, i) => (
+        <article
+          class="scroll-draw-card absolute inset-0 overflow-hidden bg-slate-800"
+          data-card={i}
+          data-active={i === 0 ? 'true' : 'false'}
+          style={`z-index: ${panelCount - i}`}
+        >
+          <img
+            src={item.src}
+            alt={item.alt}
+            class="h-full w-full object-cover"
+            loading={i < 2 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : undefined}
+            decoding={i === 0 ? 'sync' : 'async'}
+            width="1200"
+            height="800"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent" aria-hidden="true"></div>
+          <div class="scroll-draw-caption absolute bottom-0 left-0 right-0 p-4 pb-[max(1rem,var(--site-safe-bottom))] sm:p-6 sm:pb-[max(1.5rem,var(--site-safe-bottom))] lg:p-10">
+            <h2 class="font-display text-xl font-bold text-white sm:text-2xl lg:text-4xl">{item.title}</h2>
+            <p class="mt-1 max-w-lg text-sm text-slate-300 sm:mt-2 lg:text-base">{item.desc}</p>
+          </div>
+        </article>
+      ))}
+
+      <!-- Progress indicator (salt okunur ikonlar) -->
+      <div
+        class="scroll-draw-indicators absolute right-3 z-20 flex flex-col items-center gap-1.5 sm:right-5 lg:right-8"
+        style="bottom: max(1.5rem, calc(0.5rem + var(--site-safe-bottom)))"
+        aria-hidden="true"
+      >
+        {images.map((_, i) => (
+          <span
+            class="scroll-draw-indicator"
+            data-indicator={i}
+            data-active={i === 0 ? 'true' : 'false'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true">
+              {repairIcons[i % repairIcons.length].map((d) => (
+                <path stroke-linecap="round" stroke-linejoin="round" d={d} />
+              ))}
+            </svg>
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* JS çalışmadan önce yalnızca ilk kart görünür — üst üste şeffaf binme önlenir */
+  .scroll-draw-card[data-active='false'] {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .scroll-draw-card[data-active='true'] {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .scroll-draw-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(255 255 255 / 0.4);
+    transition: color 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  .scroll-draw-indicator[data-active='true'] {
+    color: rgb(251 191 36);
+    transform: scale(1.12);
+  }
+</style>
+
+<script>
+  function initScrollDraw() {
+    const section = document.querySelector('[data-scroll-draw]') as HTMLElement;
+    if (!section || section.dataset.scrollDrawInit === 'true') return;
+    section.dataset.scrollDrawInit = 'true';
+
+    const panelCount = Number(section.dataset.panelCount) || 4;
+    const cards = Array.from(section.querySelectorAll('[data-card]')) as HTMLElement[];
+    const indicators = Array.from(section.querySelectorAll('[data-indicator]')) as HTMLElement[];
+
+    function lerp(a: number, b: number, t: number) {
+      return a + (b - a) * t;
+    }
+
+    function clamp(v: number, min: number, max: number) {
+      return Math.min(Math.max(v, min), max);
+    }
+
+    function update() {
+      const sticky = section.querySelector('.scroll-draw-sticky') as HTMLElement;
+      const viewport = sticky?.offsetHeight || window.innerHeight;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const scrollable = Math.max(section.offsetHeight - viewport, 1);
+      const progress = clamp((window.scrollY - sectionTop) / scrollable, 0, 1);
+
+      const segmentSize = 1 / panelCount;
+      const activeIndex = Math.min(Math.floor(progress * panelCount), panelCount - 1);
+      const segmentStart = activeIndex * segmentSize;
+      const local = clamp((progress - segmentStart) / segmentSize, 0, 1);
+
+      cards.forEach((card, i) => {
+        let opacity = 0;
+        let translateY = 0;
+        let scale = 1;
+
+        if (i < activeIndex) {
+          translateY = -100;
+          scale = 0.92;
+        } else if (i === activeIndex) {
+          if (i === panelCount - 1) {
+            opacity = 1;
+          } else {
+            opacity = 1 - local;
+            translateY = lerp(0, -100, local);
+            scale = lerp(1, 0.92, local);
+          }
+        } else if (i === activeIndex + 1) {
+          opacity = local;
+        }
+
+        card.style.transform = `translateY(${translateY}%) scale(${scale})`;
+        card.style.opacity = String(opacity);
+        card.style.pointerEvents = opacity < 0.5 ? 'none' : 'auto';
+        card.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
+        card.dataset.active = opacity > 0.01 ? 'true' : 'false';
+      });
+
+      indicators.forEach((ind, i) => {
+        ind.dataset.active = String(i === activeIndex);
+      });
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
+
+  initScrollDraw();
+  document.addEventListener('astro:page-load', initScrollDraw);
+</script>

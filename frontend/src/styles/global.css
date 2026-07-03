@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  --site-nav-height: 4.5rem;
+  --site-safe-top: env(safe-area-inset-top, 0px);
+  --site-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --site-header-total: calc(var(--site-nav-height) + var(--site-safe-top));
+}
+
+@theme {
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --color-brand-amber: #f59e0b;
+  --color-brand-amber-dark: #d97706;
+  --color-brand-slate: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--site-header-total);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-brand-slate);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: var(--site-safe-bottom);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Hero slider animations */
+@keyframes ken-burns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+.hero-slide-active img {
+  animation: ken-burns 5s ease-out forwards;
+}
+
+@keyframes slide-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.hero-progress-bar {
+  animation: slide-progress 5s linear forwards;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s ease 0.3s both;
+}
+
+.animate-fade-up-delay {
+  animation: fade-up 0.8s ease 0.5s both;
+}
+
+/* Scroll-draw cards */
+.scroll-draw-card {
+  will-change: transform, opacity;
+  transition: none;
+  transform: translateY(0) scale(1);
+}

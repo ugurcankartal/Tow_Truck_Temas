@@ -1,0 +1,48 @@
+---
+import type { LanguageInfo, Locale, UiMessages } from '@/i18n';
+import Layout from '@/layouts/Layout.astro';
+import Navigator from '@/components/Navigator.astro';
+import HeroSlider from '@/components/HeroSlider.astro';
+import ScrollDraw from '@/components/ScrollDraw.astro';
+import ServicesSection from '@/components/ServicesSection.astro';
+import Footer from '@/components/Footer.astro';
+import { getSiteSettings, mapBusiness } from '@/lib/site-settings';
+import { getDefaultLanguageCode, getLanguages, getUiBundle } from '@/lib/i18n-api';
+
+interface Props {
+  locale: Locale;
+  languages?: LanguageInfo[];
+  defaultLocale?: Locale;
+  ui?: UiMessages;
+}
+
+const { locale } = Astro.props;
+const languages = Astro.props.languages ?? await getLanguages();
+const defaultLocale = Astro.props.defaultLocale ?? getDefaultLanguageCode(languages);
+const bundle = Astro.props.ui
+  ? { locale, ui: Astro.props.ui }
+  : await getUiBundle(locale);
+const ui = bundle.ui;
+const site = await getSiteSettings(locale);
+const business = mapBusiness(site.business);
+---
+
+<Layout site={site} locale={locale} languages={languages} defaultLocale={defaultLocale}>
+  {site.scroll_draw_images[0] && (
+    <link slot="head" rel="preload" as="image" href={site.scroll_draw_images[0].src} />
+  )}
+  <Navigator business={business} locale={locale} languages={languages} defaultLocale={defaultLocale} ui={ui} />
+  <main>
+    <HeroSlider business={business} slides={site.hero_slides} heroIntro={site.hero_intro} ui={ui} />
+    <ScrollDraw images={site.scroll_draw_images} ui={ui} />
+    <ServicesSection
+      business={business}
+      faqs={site.faqs}
+      showcaseStats={site.showcase_stats}
+      showcaseServices={site.showcase_services}
+      locale={locale}
+      ui={ui}
+    />
+  </main>
+  <Footer business={business} ui={ui} />
+</Layout>

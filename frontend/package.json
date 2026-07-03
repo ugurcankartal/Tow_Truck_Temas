@@ -1,0 +1,25 @@
+{
+  "name": "cekici-pro-frontend",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "astro build",
+    "build:prod": "astro build",
+    "build:ssr": "cross-env ASTRO_OUTPUT=server astro build",
+    "start:ssr": "cross-env ASTRO_OUTPUT=server node ./dist/server/entry.mjs",
+    "preview": "astro preview",
+    "webhook:rebuild": "node scripts/webhook-rebuild.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.2.2",
+    "@astrojs/sitemap": "^3.3.1",
+    "astro": "^5.7.10",
+    "cross-env": "^7.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3"
+  }
+}

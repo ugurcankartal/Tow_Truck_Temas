@@ -1,0 +1,317 @@
+---
+import BrandLogo from '@/components/BrandLogo.astro';
+import LanguageSelect from '@/components/LanguageSelect.astro';
+import type { BusinessView } from '@/lib/site-settings';
+import { getNavLinks, type LanguageInfo, type Locale, type UiMessages } from '@/i18n';
+
+interface Props {
+  business: BusinessView;
+  locale: Locale;
+  languages: LanguageInfo[];
+  defaultLocale: Locale;
+  ui: UiMessages;
+}
+
+const { business, locale, languages, defaultLocale, ui } = Astro.props;
+const navLinks = getNavLinks(ui);
+---
+
+<header
+  id="navigator"
+  class="site-nav fixed top-0 left-0 z-50 flex h-[var(--site-header-total)] w-screen items-center pt-[var(--site-safe-top)] transition-all duration-500"
+  data-nav
+  data-scrolled="false"
+  data-menu-open={ui.nav.menuOpen}
+  data-menu-close={ui.nav.menuClose}
+>
+  <nav
+    class="mx-auto flex h-[var(--site-nav-height)] w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-10"
+    aria-label={ui.nav.aria}
+  >
+    <a href="#hero" class="group flex items-center gap-3">
+      <BrandLogo business={business} variant="nav" />
+      <div class="flex flex-col leading-tight">
+        <span class="font-display text-lg font-bold tracking-tight text-slate-900">
+          {business.name}
+        </span>
+        <span class="text-[11px] font-medium tracking-widest text-amber-600 uppercase">
+          {business.tagline}
+        </span>
+      </div>
+    </a>
+
+    <ul class="hidden items-center gap-1 md:flex" role="list">
+      {
+        navLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-amber-50 hover:text-amber-700"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="hidden items-center gap-3 md:flex">
+      <LanguageSelect languages={languages} locale={locale} defaultLocale={defaultLocale} />
+      <a
+        href={business.phoneHref}
+        class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
+      >
+        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
+            <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
+          </svg>
+        </span>
+        {business.phone}
+      </a>
+    </div>
+
+    <button
+      type="button"
+      id="menu-toggle"
+      class="flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white md:hidden"
+      aria-label={ui.nav.menuOpen}
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <span class="block h-0.5 w-5 bg-slate-800 transition-transform" data-bar="1"></span>
+      <span class="block h-0.5 w-5 bg-slate-800 transition-opacity" data-bar="2"></span>
+      <span class="block h-0.5 w-5 bg-slate-800 transition-transform" data-bar="3"></span>
+    </button>
+  </nav>
+
+  <div
+    id="mobile-menu"
+    class="absolute top-[var(--site-header-total)] left-0 hidden w-screen border-t border-slate-100 bg-white px-6 py-4 shadow-xl md:hidden"
+  >
+    <ul class="flex flex-col gap-1" role="list">
+      {
+        navLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="mobile-nav-link block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-amber-50"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="mb-3 mt-2">
+      <LanguageSelect
+        languages={languages}
+        locale={locale}
+        defaultLocale={defaultLocale}
+        variant="mobile"
+      />
+    </div>
+    <a
+      href={business.phoneHref}
+      class="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 py-3 text-sm font-semibold text-white"
+    >
+      {business.phone}
+    </a>
+  </div>
+</header>
+
+<style>
+  .site-nav {
+    background-color: rgb(255 255 255 / 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 rgb(15 23 42 / 0.06);
+  }
+
+  @media (min-width: 768px) {
+    .site-nav {
+      background-color: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+  }
+
+  .site-nav[data-scrolled='true'] {
+    background-color: rgb(255 255 255 / 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgb(15 23 42 / 0.08);
+  }
+</style>
+
+<script>
+  function updateNavScroll() {
+    const nav = document.querySelector('[data-nav]') as HTMLElement;
+    if (!nav) return;
+    nav.setAttribute('data-scrolled', window.scrollY > 40 ? 'true' : 'false');
+  }
+
+  function getHeaderOffset(): number {
+    const nav = document.querySelector('[data-nav]') as HTMLElement;
+    return nav?.offsetHeight ?? 0;
+  }
+
+  function scrollToAnchor(hash: string) {
+    const id = hash.replace(/^#/, '');
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+
+    const top = target.getBoundingClientRect().top + window.scrollY - getHeaderOffset();
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    history.pushState(null, '', `#${id}`);
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const toggle = document.getElementById('menu-toggle') as HTMLButtonElement;
+    const nav = document.querySelector('[data-nav]') as HTMLElement;
+    const openLabel = nav?.dataset.menuOpen || 'Open menu';
+    menu?.classList.add('hidden');
+    toggle?.setAttribute('aria-expanded', 'false');
+    toggle?.setAttribute('aria-label', openLabel);
+  }
+
+  function initAnchorScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach((link) => {
+      if (link.getAttribute('href') === '#') return;
+      if (link.dataset.anchorBound === 'true') return;
+      link.dataset.anchorBound = 'true';
+
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        const target = document.querySelector(href);
+        if (!target) return;
+
+        e.preventDefault();
+        scrollToAnchor(href);
+        if (link.classList.contains('mobile-nav-link')) {
+          closeMobileMenu();
+        }
+      });
+    });
+  }
+
+  function initLangPickers() {
+    document.querySelectorAll('[data-lang-picker]').forEach((picker) => {
+      if (!(picker instanceof HTMLElement) || picker.dataset.langPickerBound === 'true') return;
+      picker.dataset.langPickerBound = 'true';
+
+      const trigger = picker.querySelector('.lang-picker__trigger') as HTMLButtonElement | null;
+      const menu = picker.querySelector('.lang-picker__menu') as HTMLElement | null;
+      if (!trigger || !menu) return;
+
+      const close = () => {
+        picker.dataset.open = 'false';
+        trigger.setAttribute('aria-expanded', 'false');
+        menu.hidden = true;
+      };
+
+      const open = () => {
+        document.querySelectorAll('[data-lang-picker][data-open="true"]').forEach((other) => {
+          if (other !== picker) {
+            other.dataset.open = 'false';
+            const otherTrigger = other.querySelector('.lang-picker__trigger');
+            const otherMenu = other.querySelector('.lang-picker__menu');
+            otherTrigger?.setAttribute('aria-expanded', 'false');
+            if (otherMenu instanceof HTMLElement) otherMenu.hidden = true;
+          }
+        });
+        picker.dataset.open = 'true';
+        trigger.setAttribute('aria-expanded', 'true');
+        menu.hidden = false;
+      };
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (picker.dataset.open === 'true') close();
+        else open();
+      });
+
+      menu.querySelectorAll('.lang-picker__option').forEach((link) => {
+        link.addEventListener('click', () => close());
+      });
+    });
+
+    if (document.documentElement.dataset.langPickerDocBound !== 'true') {
+      document.documentElement.dataset.langPickerDocBound = 'true';
+      document.addEventListener('click', () => {
+        document.querySelectorAll('[data-lang-picker][data-open="true"]').forEach((picker) => {
+          picker.dataset.open = 'false';
+          picker.querySelector('.lang-picker__trigger')?.setAttribute('aria-expanded', 'false');
+          const menu = picker.querySelector('.lang-picker__menu');
+          if (menu instanceof HTMLElement) menu.hidden = true;
+        });
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('[data-lang-picker][data-open="true"]').forEach((picker) => {
+            picker.dataset.open = 'false';
+            picker.querySelector('.lang-picker__trigger')?.setAttribute('aria-expanded', 'false');
+            const menu = picker.querySelector('.lang-picker__menu');
+            if (menu instanceof HTMLElement) menu.hidden = true;
+          });
+        }
+      });
+    }
+  }
+
+  function initNavigator() {
+    const toggle = document.getElementById('menu-toggle') as HTMLButtonElement;
+    const menu = document.getElementById('mobile-menu') as HTMLElement;
+    const bars = toggle?.querySelectorAll('[data-bar]');
+
+    updateNavScroll();
+    requestAnimationFrame(updateNavScroll);
+
+    if (toggle?.dataset.bound !== 'true') {
+      toggle.dataset.bound = 'true';
+
+      toggle.addEventListener('click', () => {
+        const nav = document.querySelector('[data-nav]') as HTMLElement;
+        const openLabel = nav?.dataset.menuOpen || 'Open menu';
+        const closeLabel = nav?.dataset.menuClose || 'Close menu';
+        const open = menu.classList.toggle('hidden');
+        const isOpen = !open;
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        toggle.setAttribute('aria-label', isOpen ? closeLabel : openLabel);
+
+        if (bars) {
+          bars[0].classList.toggle('translate-y-2', isOpen);
+          bars[0].classList.toggle('rotate-45', isOpen);
+          bars[1].classList.toggle('opacity-0', isOpen);
+          bars[2].classList.toggle('-translate-y-2', isOpen);
+          bars[2].classList.toggle('-rotate-45', isOpen);
+        }
+      });
+    }
+
+    initAnchorScroll();
+    initLangPickers();
+  }
+
+  if (document.documentElement.dataset.navScrollBound !== 'true') {
+    document.documentElement.dataset.navScrollBound = 'true';
+    window.addEventListener('scroll', updateNavScroll, { passive: true });
+    window.addEventListener('resize', updateNavScroll, { passive: true });
+    window.addEventListener('load', updateNavScroll);
+  }
+
+  initNavigator();
+  document.addEventListener('astro:page-load', initNavigator);
+
+  if (document.documentElement.dataset.anchorScrollBound !== 'true') {
+    document.documentElement.dataset.anchorScrollBound = 'true';
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash) {
+        scrollToAnchor(window.location.hash);
+      }
+    });
+  }
+</script>
