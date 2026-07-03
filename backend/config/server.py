@@ -11,7 +11,9 @@ load_dotenv(BASE_DIR / '.env')
 
 
 def ensure_dev_settings() -> None:
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.dev'
+    """Yerel geliştirmede varsayılan modül; DJANGO_SETTINGS_MODULE zaten set ise dokunma."""
+    if not os.environ.get('DJANGO_SETTINGS_MODULE'):
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.dev'
 
 
 def inject_runserver_port(argv: list[str]) -> None:

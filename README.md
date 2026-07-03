@@ -28,9 +28,24 @@ Proje dizini: **`/home/ubuntu/Tow_Truck_Temas/`**
 ```bash
 git clone https://github.com/ugurcankartal/Tow_Truck_Temas.git /home/ubuntu/Tow_Truck_Temas
 cd /home/ubuntu/Tow_Truck_Temas
+
 python3 -m venv venv
 source venv/bin/activate
-cd backend && cp .env.example .env && pip install -r requirements.txt
+
+cd backend
+cp .env.example .env
+# .env içinde DB_* ve PROD_SECRET_KEY değerlerini doldurun:
+#   python ../generate_env_secrets.py --write
+pip install -r requirements.txt
+python manage_prod.py migrate
+python manage_prod.py collectstatic --noinput
+python manage_prod.py createsuperuser   # isteğe bağlı
+
+cd ../frontend
+npm install
+npm run build:prod
+
+sudo chmod 755 /home/ubuntu
 ```
 
 - Nginx: `deploy/nginx/temasotoyolyardim.conf.example`
