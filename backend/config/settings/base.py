@@ -8,7 +8,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-load_dotenv(BASE_DIR / '.env')
+# systemd EnvironmentFile satır içi # yorumlarını değere karıştırabilir; .env dosyası esas alınır.
+load_dotenv(BASE_DIR / '.env', override=True)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
