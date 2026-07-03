@@ -16,8 +16,8 @@ import multiprocessing
 import os
 from pathlib import Path
 
-# /var/www/temasotoyolyardim — proje kökü
-APP_ROOT = Path(os.environ.get('APP_ROOT', '/var/www/temasotoyolyardim'))
+# /home/ubuntu/Tow_Truck_Temas — proje kökü (git pull)
+APP_ROOT = Path(os.environ.get('APP_ROOT', '/home/ubuntu/Tow_Truck_Temas'))
 BACKEND_DIR = APP_ROOT / 'backend'
 
 chdir = str(BACKEND_DIR)

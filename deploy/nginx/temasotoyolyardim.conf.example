@@ -1,7 +1,12 @@
 # Nginx — temasotoyolyardim.com
 # Statik Astro (frontend/dist) + Gunicorn WSGI (Django REST API / admin / media)
 #
-# Ön koşullar:
+# Proje dizini: /home/ubuntu/Tow_Truck_Temas/
+#   git clone https://github.com/ugurcankartal/Tow_Truck_Temas.git /home/ubuntu/Tow_Truck_Temas
+#
+# www-data erişimi için (ilk kurulumda bir kez):
+#   sudo chmod 755 /home/ubuntu
+#
 #   backend/.env  → PROD_SITE_URL, PROD_ALLOWED_HOSTS, PROD_CORS_*, DB_*
 #   frontend      → npm run build:prod  →  dist/
 #   backend       → python manage.py collectstatic --noinput
@@ -23,7 +28,7 @@ server {
     # ssl_certificate     /etc/letsencrypt/live/temasotoyolyardim.com/fullchain.pem;
     # ssl_certificate_key /etc/letsencrypt/live/temasotoyolyardim.com/privkey.pem;
 
-    root /var/www/temasotoyolyardim/frontend/dist;
+    root /home/ubuntu/Tow_Truck_Temas/frontend/dist;
     index index.html;
 
     # Admin medya / API yüklemeleri (Django PROD_MAX_UPLOAD_MB ile uyumlu)
@@ -31,7 +36,7 @@ server {
     client_body_timeout 300s;
 
     location /static/ {
-        alias /var/www/temasotoyolyardim/backend/staticfiles/;
+        alias /home/ubuntu/Tow_Truck_Temas/backend/staticfiles/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }

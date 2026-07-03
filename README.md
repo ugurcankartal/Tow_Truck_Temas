@@ -23,6 +23,16 @@ npm run dev
 
 ## Üretim (Ubuntu)
 
+Proje dizini: **`/home/ubuntu/Tow_Truck_Temas/`**
+
+```bash
+git clone https://github.com/ugurcankartal/Tow_Truck_Temas.git /home/ubuntu/Tow_Truck_Temas
+cd /home/ubuntu/Tow_Truck_Temas
+python3 -m venv venv
+source venv/bin/activate
+cd backend && cp .env.example .env && pip install -r requirements.txt
+```
+
 - Nginx: `deploy/nginx/temasotoyolyardim.conf.example`
 - Gunicorn: `deploy/gunicorn/temasotoyolyardim.py`
 - Systemd: `deploy/systemd/temasotoyolyardim-gunicorn.service.example`

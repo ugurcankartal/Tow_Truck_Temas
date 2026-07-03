@@ -9,13 +9,13 @@ Type=simple
 User=www-data
 Group=www-data
 
-WorkingDirectory=/var/www/temasotoyolyardim/backend
-EnvironmentFile=-/var/www/temasotoyolyardim/backend/.env
+WorkingDirectory=/home/ubuntu/Tow_Truck_Temas/backend
+EnvironmentFile=-/home/ubuntu/Tow_Truck_Temas/backend/.env
 Environment=DJANGO_SETTINGS_MODULE=config.settings.prod
-Environment=APP_ROOT=/var/www/temasotoyolyardim
+Environment=APP_ROOT=/home/ubuntu/Tow_Truck_Temas
 
-ExecStart=/var/www/temasotoyolyardim/venv/bin/gunicorn \
-    --config /var/www/temasotoyolyardim/deploy/gunicorn/temasotoyolyardim.py \
+ExecStart=/home/ubuntu/Tow_Truck_Temas/venv/bin/gunicorn \
+    --config /home/ubuntu/Tow_Truck_Temas/deploy/gunicorn/temasotoyolyardim.py \
     config.wsgi:application
 
 RuntimeDirectory=temasotoyolyardim
