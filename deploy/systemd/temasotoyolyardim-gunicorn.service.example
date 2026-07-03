@@ -10,6 +10,10 @@ User=www-data
 Group=www-data
 
 WorkingDirectory=/home/ubuntu/Tow_Truck_Temas/backend
+# systemd .env okur (root); Gunicorn worker'ları da python-dotenv ile okuyabilsin:
+#   sudo chmod 640 /home/ubuntu/Tow_Truck_Temas/backend/.env
+#   sudo chown root:www-data /home/ubuntu/Tow_Truck_Temas/backend/.env
+# Şifrede * # $ varsa tırnaksız yazın veya drop-in ile Environment=DB_PASSWORD=... kullanın.
 EnvironmentFile=-/home/ubuntu/Tow_Truck_Temas/backend/.env
 Environment=DJANGO_SETTINGS_MODULE=config.settings.prod
 Environment=APP_ROOT=/home/ubuntu/Tow_Truck_Temas

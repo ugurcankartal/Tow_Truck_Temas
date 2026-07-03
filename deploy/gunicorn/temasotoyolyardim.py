@@ -46,4 +46,15 @@ errorlog = os.environ.get('GUNICORN_ERROR_LOG', '-')
 loglevel = os.environ.get('GUNICORN_LOG_LEVEL', 'info')
 capture_output = True
 
-preload_app = True
+# preload_app=True + MySQL: master process DB bağlantısı fork sonrası bozulabilir.
+preload_app = os.environ.get('GUNICORN_PRELOAD', 'false').lower() in ('true', '1', 'yes')
+
+
+def post_fork(server, worker):
+    """Fork sonrası miras kalan DB bağlantılarını kapat."""
+    try:
+        from django.db import connections
+
+        connections.close_all()
+    except Exception:
+        pass
