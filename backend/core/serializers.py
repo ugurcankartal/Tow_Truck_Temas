@@ -70,6 +70,20 @@ class ContactMessageSerializer(serializers.ModelSerializer):
         model = ContactMessage
         fields = ('name', 'phone', 'message')
 
+    def validate_name(self, value):
+        lang = self.context.get('language_code', 'tr')
+        cleaned = (value or '').strip()
+        if not cleaned:
+            raise serializers.ValidationError(localized_text('name_required', lang))
+        return cleaned
+
+    def validate_message(self, value):
+        lang = self.context.get('language_code', 'tr')
+        cleaned = (value or '').strip()
+        if not cleaned:
+            raise serializers.ValidationError(localized_text('message_required', lang))
+        return cleaned
+
     def validate_phone(self, value):
         digits = re.sub(r'\D', '', value)
         if len(digits) < 10:

@@ -197,6 +197,31 @@ const formMessages = {
 </style>
 
 <script>
+  function formatContactApiError(payload: unknown, fallback: string): string {
+    if (!payload || typeof payload !== 'object') return fallback;
+    const data = payload as Record<string, unknown>;
+
+    if (typeof data.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+    if (Array.isArray(data.detail)) {
+      const parts = data.detail.map((item) => String(item)).filter(Boolean);
+      if (parts.length) return parts.join(' ');
+    }
+
+    const messages: string[] = [];
+    for (const [key, value] of Object.entries(data)) {
+      if (key === 'detail') continue;
+      const items = Array.isArray(value) ? value : [value];
+      for (const item of items) {
+        if (typeof item === 'string' && item.trim()) {
+          messages.push(item);
+        }
+      }
+    }
+    return messages.length ? messages.join(' ') : fallback;
+  }
+
   function initContactForm() {
     const form = document.querySelector('[data-api-form]') as HTMLFormElement;
     const status = document.getElementById('form-status');
@@ -227,14 +252,30 @@ const formMessages = {
           }),
         });
 
+        let payload: Record<string, unknown> | null = null;
+        try {
+          payload = (await res.json()) as Record<string, unknown>;
+        } catch {
+          payload = null;
+        }
+
         if (res.ok) {
-          const payload = await res.json().catch(() => ({}));
-          status.textContent = payload.detail || msgSuccess;
+          const detail =
+            payload && typeof payload.detail === 'string' ? payload.detail : msgSuccess;
+          status.textContent = detail;
           status.classList.add('text-emerald-600');
           form.reset();
-        } else {
-          throw new Error(msgError);
+          return;
         }
+
+        if (res.status >= 400 && res.status < 500) {
+          status.textContent = formatContactApiError(payload, msgError);
+          status.classList.add('text-red-600');
+          return;
+        }
+
+        status.textContent = msgErrorFallback;
+        status.classList.add('text-red-600');
       } catch {
         status.textContent = msgErrorFallback;
         status.classList.add('text-red-600');

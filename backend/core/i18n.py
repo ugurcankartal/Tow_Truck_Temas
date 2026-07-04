@@ -10,6 +10,14 @@ TEXTS = {
         'tr': 'Geçerli bir telefon numarası girin.',
         'en': 'Please enter a valid phone number.',
     },
+    'name_required': {
+        'tr': 'Ad soyad alanı zorunludur.',
+        'en': 'Name is required.',
+    },
+    'message_required': {
+        'tr': 'Mesaj alanı zorunludur.',
+        'en': 'Message is required.',
+    },
     'hero_badge_default': {
         'tr': 'Aktif Hizmet',
         'en': 'Active Service',
