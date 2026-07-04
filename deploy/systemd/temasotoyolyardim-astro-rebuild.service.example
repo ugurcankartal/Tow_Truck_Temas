@@ -1,0 +1,25 @@
+[Unit]
+Description=Temas Oto Yol Yardim — Astro rebuild webhook (admin kaydı → npm run build:prod)
+Documentation=file:///home/ubuntu/Tow_Truck_Temas/PROJECT.md
+After=network.target temasotoyolyardim-gunicorn.service
+Wants=temasotoyolyardim-gunicorn.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=www-data
+
+WorkingDirectory=/home/ubuntu/Tow_Truck_Temas/frontend
+EnvironmentFile=-/home/ubuntu/Tow_Truck_Temas/backend/.env
+Environment=WEBHOOK_PORT=9876
+Environment=ASTRO_BUILD_SCRIPT=build:prod
+# PROD_ASTRO_REBUILD_WEBHOOK_SECRET backend/.env dosyasından okunur (EnvironmentFile)
+
+ExecStart=/usr/bin/node /home/ubuntu/Tow_Truck_Temas/frontend/scripts/webhook-rebuild.mjs
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

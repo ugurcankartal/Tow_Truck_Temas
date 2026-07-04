@@ -48,8 +48,45 @@ npm run build:prod
 sudo chmod 755 /home/ubuntu
 ```
 
+**Önemli:** Önyüz statik (`frontend/dist`). Admin’de metin/resim değişince otomatik yansıması için **Astro rebuild webhook** servisini kurun (aşağıya bakın).
+
 - Nginx: `deploy/nginx/temasotoyolyardim.conf.example`
 - Gunicorn: `deploy/gunicorn/temasotoyolyardim.py`
 - Systemd: `deploy/systemd/temasotoyolyardim-gunicorn.service.example`
+- Astro rebuild: `deploy/systemd/temasotoyolyardim-astro-rebuild.service.example`
 
 Domain: **temasotoyolyardim.com**
+
+### Admin → önyüz otomatik güncelleme (prod)
+
+Dev’de `ASTRO_REBUILD_LOCAL=true` veya webhook vardı. Prod’da aynı akış:
+
+```
+Admin Kaydet → Django sinyali → POST /rebuild → npm run build:prod → dist/ güncellenir
+```
+
+1. `backend/.env` içinde (satır sonu `#` yorumu kullanmayın):
+
+```env
+ASTRO_REBUILD_WEBHOOK_URL=http://127.0.0.1:9876/rebuild
+PROD_ASTRO_REBUILD_WEBHOOK_SECRET=...   # python ../generate_env_secrets.py --write
+ASTRO_BUILD_SCRIPT=build:prod
+ASTRO_REBUILD_LOCAL=false
+```
+
+2. Webhook systemd servisi (`ubuntu` kullanıcısı `.env` okuyabilmeli — `usermod -aG www-data ubuntu`):
+
+```bash
+sudo usermod -aG www-data ubuntu
+sudo cp deploy/systemd/temasotoyolyardim-astro-rebuild.service.example \
+  /etc/systemd/system/temasotoyolyardim-astro-rebuild.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now temasotoyolyardim-astro-rebuild
+curl http://127.0.0.1:9876/health
+```
+
+3. İlk deploy sonrası bir kez manuel build: `cd frontend && npm run build:prod`
+
+4. Admin’de Site Ayarları kaydedin → birkaç saniye sonra view-source’ta SEO/JSON-LD güncellenmiş olmalı.
+
+Manuel tetikleme: `python manage_prod.py trigger_astro_rebuild --sync`

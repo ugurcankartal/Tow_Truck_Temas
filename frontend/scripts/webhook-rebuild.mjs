@@ -18,19 +18,32 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const PORT = Number(process.env.WEBHOOK_PORT || 9876);
-const SECRET = process.env.WEBHOOK_SECRET || process.env.ASTRO_REBUILD_WEBHOOK_SECRET || '';
-const BUILD_SCRIPT = process.env.ASTRO_BUILD_SCRIPT || 'build';
+const SECRET =
+  process.env.WEBHOOK_SECRET ||
+  process.env.PROD_ASTRO_REBUILD_WEBHOOK_SECRET ||
+  process.env.DEV_ASTRO_REBUILD_WEBHOOK_SECRET ||
+  process.env.ASTRO_REBUILD_WEBHOOK_SECRET ||
+  '';
+const BUILD_SCRIPT =
+  process.env.ASTRO_BUILD_SCRIPT ||
+  (process.env.NODE_ENV === 'production' ? 'build:prod' : 'build');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const BUILD_API_URL = process.env.BUILD_API_URL || '';
 
 let building = false;
 
 function runBuild() {
   return new Promise((resolve, reject) => {
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    const env = { ...process.env };
+    if (BUILD_API_URL) {
+      env.PUBLIC_API_URL = BUILD_API_URL;
+    }
     const child = spawn(npm, ['run', BUILD_SCRIPT], {
       cwd: ROOT,
       stdio: 'inherit',
       shell: process.platform === 'win32',
+      env,
     });
     child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`build exit ${code}`))));
   });
