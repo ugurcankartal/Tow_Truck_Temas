@@ -6,6 +6,7 @@ Wants=temasotoyolyardim-gunicorn.service
 
 [Service]
 Type=simple
+# npm/astro build ubuntu ile çalışmalı; frontend/ root’a ait olmamalı (chown ubuntu:ubuntu frontend)
 User=ubuntu
 Group=ubuntu
 SupplementaryGroups=www-data

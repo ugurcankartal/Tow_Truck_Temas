@@ -43,7 +43,8 @@ python manage_prod.py createsuperuser   # isteğe bağlı
 
 cd ../frontend
 npm install
-npm run build:prod
+sudo chown -R ubuntu:ubuntu /home/ubuntu/Tow_Truck_Temas/frontend
+sudo -u ubuntu npm run build:prod
 
 sudo chmod 755 /home/ubuntu
 ```
@@ -85,7 +86,15 @@ sudo systemctl enable --now temasotoyolyardim-astro-rebuild
 curl http://127.0.0.1:9876/health
 ```
 
-3. İlk deploy sonrası bir kez manuel build: `cd frontend && npm run build:prod`
+**Frontend izinleri:** Webhook servisi `ubuntu` kullanıcısıyla `npm run build` çalıştırır. **`root` ile build yapmayın** — `.astro/` ve `dist/` root’a kalırsa webhook `EACCES` verir. Düzeltme:
+
+```bash
+sudo chown -R ubuntu:ubuntu /home/ubuntu/Tow_Truck_Temas/frontend
+# nginx okuyabilsin (dist statik)
+chmod -R o+rX /home/ubuntu/Tow_Truck_Temas/frontend/dist
+```
+
+3. İlk deploy build’i **ubuntu** ile: `sudo -u ubuntu npm run build:prod` (veya `su - ubuntu`)
 
 4. Admin’de Site Ayarları kaydedin → birkaç saniye sonra view-source’ta SEO/JSON-LD güncellenmiş olmalı.
 
