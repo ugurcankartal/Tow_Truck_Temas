@@ -385,6 +385,7 @@ def _run_model_handler(
     preserve_fields: frozenset[str] = frozenset(),
     context: str = SITE_CONTEXT,
     progress_label: str = '',
+    row_transform=None,
 ) -> dict[str, int] | int:
     stats = stats or _new_stats()
     source_language, source_rows = resolve_source_translations(model, source_language)
@@ -410,6 +411,7 @@ def _run_model_handler(
             progress=progress,
             progress_label=progress_label,
             dry_run=dry_run,
+            row_transform=row_transform,
         )
     return total if dry_run else stats
 
