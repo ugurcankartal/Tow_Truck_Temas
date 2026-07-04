@@ -99,16 +99,40 @@ def _execute_rebuild(source: str, updated_at: str | None = None) -> None:
 
 def trigger_astro_rebuild(source: str, updated_at: str | None = None, *, async_run: bool = True) -> None:
     """
-    SiteSettings / FAQ değişikliğinde Astro rebuild tetikler.
-    Varsayılan: arka planda thread (admin kaydını bloklamaz).
+    İçerik değişikliğinde Astro rebuild tetikler.
+    Varsayılan: debounce + arka plan thread (admin kaydını bloklamaz).
     """
-    if async_run:
-        thread = threading.Thread(
-            target=_execute_rebuild,
-            args=(source, updated_at),
-            daemon=True,
-            name=f'astro-rebuild-{source}',
-        )
-        thread.start()
-    else:
+    if not async_run:
         _execute_rebuild(source, updated_at)
+        return
+
+    _schedule_debounced_rebuild(source, updated_at)
+
+
+_DEBOUNCE_SECONDS = 8.0
+_rebuild_lock = threading.Lock()
+_rebuild_timer: threading.Timer | None = None
+_pending_source = 'model_change'
+_pending_updated_at: str | None = None
+
+
+def _fire_debounced_rebuild() -> None:
+    global _pending_source, _pending_updated_at
+    with _rebuild_lock:
+        source = _pending_source
+        updated_at = _pending_updated_at
+    _execute_rebuild(source, updated_at)
+
+
+def _schedule_debounced_rebuild(source: str, updated_at: str | None) -> None:
+    global _rebuild_timer, _pending_source, _pending_updated_at
+
+    with _rebuild_lock:
+        _pending_source = source
+        if updated_at:
+            _pending_updated_at = updated_at
+        if _rebuild_timer is not None:
+            _rebuild_timer.cancel()
+        _rebuild_timer = threading.Timer(_DEBOUNCE_SECONDS, _fire_debounced_rebuild)
+        _rebuild_timer.daemon = True
+        _rebuild_timer.start()
