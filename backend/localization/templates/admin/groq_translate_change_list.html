@@ -357,6 +357,24 @@
           }
         }
 
+        function parseJsonResponse(response) {
+          var contentType = response.headers.get("content-type") || "";
+          if (contentType.indexOf("application/json") === -1) {
+            return response.text().then(function (text) {
+              var snippet = (text || "").replace(/\s+/g, " ").trim().slice(0, 160);
+              throw new Error(
+                "Sunucu JSON yerine HTML döndürdü (HTTP " +
+                  response.status +
+                  "). " +
+                  (snippet || "Yetki/CSRF veya sunucu hatası olabilir.")
+              );
+            });
+          }
+          return response.json().then(function (payload) {
+            return { ok: response.ok, payload: payload };
+          });
+        }
+
         function startTranslation() {
           openModal();
           button.disabled = true;
@@ -371,11 +389,7 @@
             credentials: "same-origin",
             body: "csrfmiddlewaretoken=" + encodeURIComponent(csrfToken),
           })
-            .then(function (response) {
-              return response.json().then(function (payload) {
-                return { ok: response.ok, payload: payload };
-              });
-            })
+            .then(parseJsonResponse)
             .then(function (result) {
               const payload = result.payload || {};
               if (!payload.ok && payload.status !== "running") {

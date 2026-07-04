@@ -175,8 +175,17 @@ def start_groq_translation_background(handler: str) -> str:
     backend_dir = Path(settings.BASE_DIR)
     manage_py = _resolve_manage_script(backend_dir)
     logs_dir = backend_dir / 'logs'
-    logs_dir.mkdir(exist_ok=True)
     log_path = logs_dir / f'groq-{handler}.log'
+
+    try:
+        logs_dir.mkdir(exist_ok=True)
+    except OSError as exc:
+        release_groq_lock(handler)
+        save_groq_translation_result(
+            handler,
+            error=f'Log dizini yazılamıyor ({logs_dir}): {exc}',
+        )
+        return 'spawn_error'
 
     env = os.environ.copy()
     env.setdefault(
@@ -201,11 +210,11 @@ def start_groq_translation_background(handler: str) -> str:
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
-    except OSError:
+    except OSError as exc:
         release_groq_lock(handler)
         save_groq_translation_result(
             handler,
-            error='Groq çevirisi başlatılamadı. Sunucu loglarını kontrol edin.',
+            error=f'Groq log dosyası yazılamıyor ({log_path}): {exc}',
         )
         return 'spawn_error'
 

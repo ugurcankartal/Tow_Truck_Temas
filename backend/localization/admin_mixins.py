@@ -37,6 +37,8 @@ class GroqTranslateAdminMixin:
 
     def groq_translate_view(self, request):
         if not self.has_change_permission(request):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'ok': False, 'message': 'Yetkisiz.'}, status=403)
             raise PermissionDenied
 
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -54,7 +56,14 @@ class GroqTranslateAdminMixin:
             messages.error(request, msg)
             return HttpResponseRedirect(self._groq_changelist_url())
 
-        outcome = start_groq_translation_background(handler_name)
+        try:
+            outcome = start_groq_translation_background(handler_name)
+        except Exception as exc:
+            msg = f'Groq çevirisi başlatılamadı: {exc}'
+            if is_ajax:
+                return self._groq_translate_ajax(ok=False, message=msg)
+            messages.error(request, msg)
+            return HttpResponseRedirect(self._groq_changelist_url())
         if outcome == 'already_running':
             msg = 'Groq çevirisi zaten çalışıyor.'
             if is_ajax:
