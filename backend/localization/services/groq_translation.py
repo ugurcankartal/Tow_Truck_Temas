@@ -184,22 +184,28 @@ def _needs_groq_translation(
     target_row,
     fields: list[str],
     preserve_fields: frozenset[str] = frozenset(),
+    *,
+    source_payload: dict[str, Any] | None = None,
 ) -> bool:
     if target_row is None:
         return True
 
-    has_content = False
+    needs_work = False
     for field in fields:
         if field in preserve_fields:
             continue
-        source_val = _field_value_for_compare(getattr(source_row, field, None) or '')
+        if source_payload is not None:
+            source_val = _field_value_for_compare(source_payload.get(field, '') or '')
+        else:
+            source_val = _field_value_for_compare(getattr(source_row, field, None) or '')
         if source_val in (None, '', [], {}):
             continue
-        has_content = True
         target_val = _field_value_for_compare(getattr(target_row, field, None) or '')
-        if target_val != source_val:
-            return False
-    return has_content
+        if target_val in (None, '', [], {}):
+            needs_work = True
+        elif target_val == source_val:
+            needs_work = True
+    return needs_work
 
 
 def _collect_pending_records(
@@ -220,14 +226,22 @@ def _collect_pending_records(
         existing = model.objects.filter(
             **{f'{parent_attr}_id': parent_id, 'language': target_language},
         ).first()
-        if existing and not _needs_groq_translation(row, existing, fields, preserve_fields):
+
+        payload = {field: getattr(row, field) for field in fields}
+        if row_transform:
+            payload = row_transform(row, payload)
+
+        if existing and not _needs_groq_translation(
+            row,
+            existing,
+            fields,
+            preserve_fields,
+            source_payload=payload,
+        ):
             stats['skipped'] += 1
             continue
 
         record_id = str(parent_id)
-        payload = {field: getattr(row, field) for field in fields}
-        if row_transform:
-            payload = row_transform(row, payload)
         payload = _non_empty_fields(payload)
         if not payload:
             stats['skipped'] += 1
@@ -400,6 +414,44 @@ def _run_model_handler(
     return total if dry_run else stats
 
 
+SITE_SETTINGS_GROQ_FIELDS = [
+    'meta_title', 'meta_description', 'meta_keywords',
+    'business_name', 'legal_name', 'tagline',
+    'street', 'district', 'city', 'region',
+    'footer_copyright', 'hero_intro_badge',
+    'hero_intro_title', 'hero_intro_body',
+    'area_served',
+]
+
+
+def _merge_site_settings_source(row, payload: dict[str, Any]) -> dict[str, Any]:
+    """Çeviri satırı boşsa SiteSettings ana modelindeki metni kaynak olarak kullan."""
+    settings = row.settings
+    merged: dict[str, Any] = {}
+    for field, value in payload.items():
+        if value in (None, '', [], {}):
+            value = getattr(settings, field, None)
+        if value not in (None, '', [], {}):
+            merged[field] = value
+    return merged
+
+
+def _ensure_site_settings_source_row(source_language: Language) -> None:
+    from core.models import SiteSettings, SiteSettingsTranslation
+
+    settings = SiteSettings.load()
+    defaults: dict[str, Any] = {}
+    for field in SITE_SETTINGS_GROQ_FIELDS:
+        value = getattr(settings, field, None)
+        if value not in (None, '', [], {}):
+            defaults[field] = value
+    SiteSettingsTranslation.objects.get_or_create(
+        settings=settings,
+        language=source_language,
+        defaults=defaults,
+    )
+
+
 def translate_site_settings(
     source_language: Language,
     target_languages: list[Language],
@@ -410,17 +462,12 @@ def translate_site_settings(
 ) -> dict[str, int] | int:
     from core.models import SiteSettingsTranslation
 
+    _ensure_site_settings_source_row(source_language)
+
     return _run_model_handler(
         SiteSettingsTranslation,
         'settings',
-        [
-            'meta_title', 'meta_description', 'meta_keywords',
-            'business_name', 'legal_name', 'tagline',
-            'street', 'district', 'city', 'region',
-            'footer_copyright', 'hero_intro_badge',
-            'hero_intro_title', 'hero_intro_body',
-            'area_served',
-        ],
+        SITE_SETTINGS_GROQ_FIELDS,
         source_language=source_language,
         target_languages=target_languages,
         stats=stats,
@@ -430,6 +477,7 @@ def translate_site_settings(
         list_fields=frozenset({'area_served'}),
         context=SITE_CONTEXT,
         progress_label='Site ayarı',
+        row_transform=_merge_site_settings_source,
     )
 
 
@@ -711,4 +759,10 @@ def run_groq_translation(
         progress=progress,
         dry_run=False,
     )
+    public = public_groq_stats(stats)
+    if not any(public.values()) and not stats.get('_abort'):
+        stats['_abort_message'] = (
+            'İşlenecek çeviri bulunamadı. '
+            'Kaynak dilde metin olduğundan ve hedef dil kayıtlarının eksik/boş olduğundan emin olun.'
+        )
     return stats
