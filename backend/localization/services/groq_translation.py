@@ -65,6 +65,65 @@ def resolve_source_translations(model, preferred: Language) -> tuple[Language, A
     return preferred, model.objects.none()
 
 
+def _merge_parent_source(parent_attr: str):
+    """Çeviri satırı boşsa FK üzerindeki ana model alanlarını kaynak olarak kullan."""
+
+    def merge(row, payload: dict[str, Any]) -> dict[str, Any]:
+        parent = getattr(row, parent_attr)
+        merged: dict[str, Any] = {}
+        for field, value in payload.items():
+            if value in (None, '', [], {}):
+                value = getattr(parent, field, None)
+            if value not in (None, '', [], {}):
+                merged[field] = value
+        return merged
+
+    return merge
+
+
+def _bootstrap_translation_sources(
+    translation_model,
+    parent_attr: str,
+    fields: list[str],
+    source_language: Language,
+    *,
+    parent_queryset=None,
+) -> None:
+    """Varsayılan dil çeviri satırlarını ana model kayıtlarından oluşturur."""
+    parent_model = translation_model._meta.get_field(parent_attr).related_model
+    if parent_queryset is None:
+        if parent_model.__name__ in ('SiteSettings', 'ShowcaseServiceSection'):
+            parents = [parent_model.load()]
+        else:
+            parents = parent_model.objects.all()
+            if any(getattr(f, 'name', None) == 'is_active' for f in parent_model._meta.fields):
+                parents = parents.filter(is_active=True)
+    else:
+        parents = parent_queryset
+
+    for parent in parents:
+        defaults: dict[str, Any] = {}
+        for field in fields:
+            value = getattr(parent, field, None)
+            if value not in (None, '', [], {}):
+                defaults[field] = value
+        obj, created = translation_model.objects.get_or_create(
+            **{parent_attr: parent, 'language': source_language},
+            defaults=defaults,
+        )
+        if not created:
+            updates: dict[str, Any] = {}
+            for field in fields:
+                current = getattr(obj, field, None)
+                if current not in (None, '', [], {}):
+                    continue
+                value = getattr(parent, field, None)
+                if value not in (None, '', [], {}):
+                    updates[field] = value
+            if updates:
+                translation_model.objects.filter(pk=obj.pk).update(**updates)
+
+
 def _non_empty_fields(row: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in row.items() if value not in (None, '', [], {})}
 
@@ -386,11 +445,32 @@ def _run_model_handler(
     context: str = SITE_CONTEXT,
     progress_label: str = '',
     row_transform=None,
+    parent_queryset=None,
+    bootstrap_sources: bool = True,
 ) -> dict[str, int] | int:
     stats = stats or _new_stats()
+
+    if bootstrap_sources:
+        _bootstrap_translation_sources(
+            model,
+            parent_attr,
+            fields,
+            source_language,
+            parent_queryset=parent_queryset,
+        )
+
+    if row_transform is None:
+        row_transform = _merge_parent_source(parent_attr)
+
     source_language, source_rows = resolve_source_translations(model, source_language)
     if not source_rows.exists():
+        stats['_abort_message'] = (
+            'Kaynak dilde çevrilecek içerik bulunamadı. '
+            'Ana kayıtlarda metin olduğundan emin olun.'
+        )
         return 0 if dry_run else stats
+
+    source_rows = source_rows.select_related(parent_attr)
     total = 0
     for target_language in target_languages:
         if _groq_aborted(stats):
@@ -426,34 +506,6 @@ SITE_SETTINGS_GROQ_FIELDS = [
 ]
 
 
-def _merge_site_settings_source(row, payload: dict[str, Any]) -> dict[str, Any]:
-    """Çeviri satırı boşsa SiteSettings ana modelindeki metni kaynak olarak kullan."""
-    settings = row.settings
-    merged: dict[str, Any] = {}
-    for field, value in payload.items():
-        if value in (None, '', [], {}):
-            value = getattr(settings, field, None)
-        if value not in (None, '', [], {}):
-            merged[field] = value
-    return merged
-
-
-def _ensure_site_settings_source_row(source_language: Language) -> None:
-    from core.models import SiteSettings, SiteSettingsTranslation
-
-    settings = SiteSettings.load()
-    defaults: dict[str, Any] = {}
-    for field in SITE_SETTINGS_GROQ_FIELDS:
-        value = getattr(settings, field, None)
-        if value not in (None, '', [], {}):
-            defaults[field] = value
-    SiteSettingsTranslation.objects.get_or_create(
-        settings=settings,
-        language=source_language,
-        defaults=defaults,
-    )
-
-
 def translate_site_settings(
     source_language: Language,
     target_languages: list[Language],
@@ -463,8 +515,6 @@ def translate_site_settings(
     dry_run: bool = False,
 ) -> dict[str, int] | int:
     from core.models import SiteSettingsTranslation
-
-    _ensure_site_settings_source_row(source_language)
 
     return _run_model_handler(
         SiteSettingsTranslation,
@@ -479,7 +529,6 @@ def translate_site_settings(
         list_fields=frozenset({'area_served'}),
         context=SITE_CONTEXT,
         progress_label='Site ayarı',
-        row_transform=_merge_site_settings_source,
     )
 
 
@@ -763,8 +812,13 @@ def run_groq_translation(
     )
     public = public_groq_stats(stats)
     if not any(public.values()) and not stats.get('_abort'):
-        stats['_abort_message'] = (
-            'İşlenecek çeviri bulunamadı. '
-            'Kaynak dilde metin olduğundan ve hedef dil kayıtlarının eksik/boş olduğundan emin olun.'
-        )
+        if stats.get('skipped', 0) > 0:
+            stats['_abort_message'] = (
+                f'Tüm kayıtlar zaten çevrilmiş görünüyor ({stats["skipped"]} atlandı).'
+            )
+        elif not stats.get('_abort_message'):
+            stats['_abort_message'] = (
+                'İşlenecek çeviri bulunamadı. '
+                'Kaynak dilde metin olduğundan ve hedef dil kayıtlarının eksik/boş olduğundan emin olun.'
+            )
     return stats
