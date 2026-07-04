@@ -2,13 +2,18 @@ from django import forms
 
 from .models import SiteSettings
 
+URL_PLACEHOLDER = 'https://alanadiniz.com'
+
 URL_WIDGET = forms.TextInput(
     attrs={
         'class': 'vTextField',
         'style': 'width: 100%; max-width: 42rem;',
-        'placeholder': 'https://ornek.com',
+        'placeholder': URL_PLACEHOLDER,
     },
 )
+
+URL_HELP_REQUIRED = 'Tam site adresi girin (https:// ile başlamalı).'
+URL_HELP_OPTIONAL = 'İsteğe bağlı. Tam adres girin (https:// ile başlamalı).'
 
 
 class SiteSettingsAdminForm(forms.ModelForm):
@@ -25,8 +30,22 @@ class SiteSettingsAdminForm(forms.ModelForm):
             'facebook_url': URL_WIDGET,
         }
         help_texts = {
-            'canonical_url': 'Tam adres girin, örn: https://cekicipro.com/',
-            'site_url': 'Tam adres girin, örn: https://cekicipro.com',
+            'canonical_url': URL_HELP_REQUIRED,
+            'site_url': URL_HELP_REQUIRED,
+            'og_image_url': (
+                'Sosyal medya paylaşım görseli. '
+                + URL_HELP_OPTIONAL
+            ),
+            'logo_url': (
+                'Yüklü logo yoksa kullanılır. '
+                + URL_HELP_OPTIONAL
+            ),
+            'favicon_url': (
+                'Yüklü favicon yoksa kullanılır. '
+                + URL_HELP_OPTIONAL
+            ),
+            'instagram_url': 'Instagram profil sayfası. ' + URL_HELP_OPTIONAL,
+            'facebook_url': 'Facebook sayfası. ' + URL_HELP_OPTIONAL,
         }
 
     def _normalize_url(self, value: str) -> str:
