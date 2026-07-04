@@ -81,6 +81,10 @@ class GroqTranslateAdminMixin:
         if not handler_name:
             return JsonResponse({'status': 'idle'})
 
+        from localization.services.groq_translation_runner import release_stale_groq_lock
+
+        release_stale_groq_lock(handler_name)
+
         progress = get_groq_translation_progress(handler_name)
         if progress:
             return JsonResponse(progress)
