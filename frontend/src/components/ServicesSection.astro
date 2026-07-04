@@ -1,6 +1,5 @@
 ---
 import type { BusinessView, ShowcaseServices, ShowcaseStat, SiteFaq } from '@/lib/site-settings';
-import { apiUrl } from '@/lib/site-settings';
 import type { Locale, UiMessages } from '@/i18n';
 
 interface Props {
@@ -14,7 +13,8 @@ interface Props {
 
 const { business, faqs, showcaseStats, showcaseServices, locale, ui } = Astro.props;
 const fullAddress = `${business.address.street}, ${business.address.district}, ${business.address.city}`;
-const contactApiUrl = `${apiUrl('contact/')}?lang=${locale}`;
+/** Göreli URL — tarayıcı aynı origin üzerinden /api/ proxy kullanır (127.0.0.1 build URL'si gömülmez). */
+const contactApiUrl = `/api/v1/contact/?lang=${locale}`;
 const formMessages = {
   sending: ui.services.sending,
   success: ui.services.success,

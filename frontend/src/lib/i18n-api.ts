@@ -1,11 +1,18 @@
 import { bundleToUi, type LanguageInfo, type Locale, type UiMessages } from '@/i18n';
 import { tr as fallbackTr } from '@/i18n';
-import { getPublicApiUrl } from '@/lib/env';
+import { getBuildApiUrl, getPublicApiUrl } from '@/lib/env';
 
-const API_URL = getPublicApiUrl();
+const CLIENT_API_URL = getPublicApiUrl();
+const BUILD_API_URL = getBuildApiUrl();
 
 export function apiUrl(path: string): string {
-  const base = API_URL.replace(/\/$/, '');
+  const base = CLIENT_API_URL.replace(/\/$/, '');
+  const normalized = path.startsWith('/') ? path.slice(1) : path;
+  return `${base}/api/v1/${normalized}`;
+}
+
+function buildApiUrl(path: string): string {
+  const base = BUILD_API_URL.replace(/\/$/, '');
   const normalized = path.startsWith('/') ? path.slice(1) : path;
   return `${base}/api/v1/${normalized}`;
 }
@@ -22,7 +29,7 @@ const FALLBACK_LANGUAGES: LanguageInfo[] = [
 
 export async function getLanguages(): Promise<LanguageInfo[]> {
   try {
-    const res = await fetch(apiUrl('languages/'), {
+    const res = await fetch(buildApiUrl('languages/'), {
       headers: { Accept: 'application/json' },
       cache: import.meta.env.DEV ? 'no-store' : 'default',
     });
@@ -35,7 +42,7 @@ export async function getLanguages(): Promise<LanguageInfo[]> {
 
 export async function getUiBundle(locale: string): Promise<{ locale: Locale; ui: UiMessages }> {
   try {
-    const res = await fetch(apiUrl(`bundle/?lang=${locale}`), {
+    const res = await fetch(buildApiUrl(`bundle/?lang=${locale}`), {
       headers: { Accept: 'application/json' },
       cache: import.meta.env.DEV ? 'no-store' : 'default',
     });

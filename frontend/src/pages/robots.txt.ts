@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 
-import { getPublicApiUrl } from '@/lib/env';
+import { getBuildApiUrl } from '@/lib/env';
 
-const API_URL = getPublicApiUrl();
+const API_URL = getBuildApiUrl();
 
 /** SSR: her istekte API; static build: rebuild sırasında API'den alınır. */
 export const prerender = process.env.ASTRO_OUTPUT !== 'server';

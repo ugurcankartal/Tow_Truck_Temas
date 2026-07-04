@@ -1,8 +1,8 @@
-import { getPublicApiUrl, getPublicSiteUrl } from '@/lib/env';
+import { getBuildApiUrl, getPublicApiUrl, getPublicSiteUrl } from '@/lib/env';
 import { business as fallbackBusiness, faqs as fallbackFaqs, scrollImages as fallbackScrollImages, slides as fallbackSlides, stats as fallbackStats, services as fallbackServices } from '@/data/business';
 import type { Locale } from '@/i18n';
 
-const API_URL = getPublicApiUrl();
+const CLIENT_API_URL = getPublicApiUrl();
 
 export interface SiteSeo {
   title: string;
@@ -309,7 +309,7 @@ export function mapBusiness(api: SiteBusiness): BusinessView {
 export const API_V1_PREFIX = '/api/v1';
 
 export function getApiBaseUrl(): string {
-  return API_URL.replace(/\/$/, '');
+  return CLIENT_API_URL.replace(/\/$/, '');
 }
 
 /** `site-settings/` gibi yol parçası alır; tam API URL döner. */
@@ -325,8 +325,10 @@ export function apiUrl(path: string): string {
  */
 export async function getSiteSettings(locale: Locale = 'tr'): Promise<SiteSettingsResponse> {
   const noCache = import.meta.env.DEV || import.meta.env.SSR;
+  const buildBase = getBuildApiUrl();
+  const settingsUrl = `${buildBase}${API_V1_PREFIX}/site-settings/?lang=${locale}`;
   try {
-    const res = await fetch(apiUrl(`site-settings/?lang=${locale}`), {
+    const res = await fetch(settingsUrl, {
       headers: { Accept: 'application/json' },
       cache: noCache ? 'no-store' : 'default',
     });

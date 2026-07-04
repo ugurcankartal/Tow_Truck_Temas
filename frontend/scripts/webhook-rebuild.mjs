@@ -37,7 +37,8 @@ function runBuild() {
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     const env = { ...process.env };
     if (BUILD_API_URL) {
-      env.PUBLIC_API_URL = BUILD_API_URL;
+      // SSG fetch için sunucu içi API; PUBLIC_API_URL (.env.production) tarayıcı için kalır.
+      env.PUBLIC_BUILD_API_URL = BUILD_API_URL;
     }
     const child = spawn(npm, ['run', BUILD_SCRIPT], {
       cwd: ROOT,

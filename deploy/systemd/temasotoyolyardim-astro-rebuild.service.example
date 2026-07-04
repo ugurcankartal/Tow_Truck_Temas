@@ -16,6 +16,7 @@ EnvironmentFile=-/home/ubuntu/Tow_Truck_Temas/backend/.env
 Environment=WEBHOOK_PORT=9876
 Environment=ASTRO_BUILD_SCRIPT=build:prod
 Environment=BUILD_API_URL=http://127.0.0.1:8765
+# BUILD_API_URL → webhook PUBLIC_BUILD_API_URL (SSG fetch). PUBLIC_API_URL .env.production'da kalır (form/API).
 # PROD_ASTRO_REBUILD_WEBHOOK_SECRET backend/.env dosyasından okunur (EnvironmentFile)
 
 ExecStart=/usr/bin/node /home/ubuntu/Tow_Truck_Temas/frontend/scripts/webhook-rebuild.mjs

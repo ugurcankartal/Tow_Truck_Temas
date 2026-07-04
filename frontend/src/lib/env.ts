@@ -14,3 +14,12 @@ export function getPublicSiteUrl(): string {
 export function getPublicApiUrl(): string {
   return normalizeSiteUrl(import.meta.env.PUBLIC_API_URL ?? 'http://127.0.0.1:8000');
 }
+
+/** SSG/build sırasında site-settings vb. — webhook BUILD_API_URL (sunucu içi nginx). */
+export function getBuildApiUrl(): string {
+  const buildUrl = import.meta.env.PUBLIC_BUILD_API_URL;
+  if (buildUrl) {
+    return normalizeSiteUrl(buildUrl);
+  }
+  return getPublicApiUrl();
+}
