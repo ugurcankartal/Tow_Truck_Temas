@@ -113,8 +113,17 @@ location /media/ {
 Sunucuda nginx config güncelleyip `nginx -t && systemctl reload nginx`. Dosyaların varlığı:
 
 ```bash
+curl -I https://temasotoyolyardim.com/media/site_logo/2026/07/DOSYAADI.jpeg
 ls -la /home/ubuntu/Tow_Truck_Temas/backend/media/site_logo/2026/07/
 chown -R www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/media
+```
+
+**Build hâlâ eski metin gösteriyorsa:** webhook build sırasında API'ye ulaşamazsa fallback (`Çekici Pro…`) gömülür. Nginx'e `127.0.0.1:8765` internal API ekleyin (repo `deploy/nginx/…` örneğinde) ve webhook servisinde `BUILD_API_URL=http://127.0.0.1:8765`. Test:
+
+```bash
+curl -s http://127.0.0.1:8765/api/v1/site-settings/?lang=tr | head -c 200
+python manage_prod.py trigger_astro_rebuild --sync
+grep -o '<title>[^<]*' ../frontend/dist/index.html
 ```
 
 Dosya yoksa admin'den yeniden yükleyin (sunucu sıfırlandıysa media git'te değildir). Sonra `trigger_astro_rebuild --sync`.

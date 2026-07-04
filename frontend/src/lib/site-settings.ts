@@ -337,9 +337,7 @@ export async function getSiteSettings(locale: Locale = 'tr'): Promise<SiteSettin
 
     return (await res.json()) as SiteSettingsResponse;
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.warn('[site-settings] API erişilemedi, yerel fallback kullanılıyor:', error);
-    }
+    console.warn('[site-settings] API erişilemedi, fallback kullanılıyor:', error);
     return getFallbackSettings(locale);
   }
 }

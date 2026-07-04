@@ -27,6 +27,21 @@ upstream django_backend {
     server unix:/run/temasotoyolyardim/gunicorn.sock fail_timeout=0;
 }
 
+# Astro webhook build — aynı sunucuda API (Cloudflare dışı, build fallback önlenir)
+server {
+    listen 127.0.0.1:8765;
+    server_name localhost;
+
+    location /api/ {
+        proxy_pass http://django_backend;
+        proxy_redirect off;
+        proxy_set_header Host temasotoyolyardim.com;
+        proxy_set_header X-Real-IP 127.0.0.1;
+        proxy_set_header X-Forwarded-For 127.0.0.1;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+
 server {
     listen 443 ssl http2;
     server_name temasotoyolyardim.com www.temasotoyolyardim.com;
