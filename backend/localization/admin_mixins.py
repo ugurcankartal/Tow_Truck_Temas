@@ -131,13 +131,18 @@ class GroqTranslateAdminMixin:
             'admin:%s_%s_groq_translate_status' % info,
         )
         extra_context['default_language'] = default_language
-        extra_context['groq_translation_running'] = (
-            is_groq_translation_running(handler_name) if handler_name else False
-        )
-        extra_context['groq_translation_progress'] = (
-            get_groq_translation_progress(handler_name) if handler_name else None
-        )
-        extra_context['groq_translation_status'] = (
-            get_groq_translation_status(handler_name) if handler_name else None
-        )
+        try:
+            extra_context['groq_translation_running'] = (
+                is_groq_translation_running(handler_name) if handler_name else False
+            )
+            extra_context['groq_translation_progress'] = (
+                get_groq_translation_progress(handler_name) if handler_name else None
+            )
+            extra_context['groq_translation_status'] = (
+                get_groq_translation_status(handler_name) if handler_name else None
+            )
+        except Exception:
+            extra_context['groq_translation_running'] = False
+            extra_context['groq_translation_progress'] = None
+            extra_context['groq_translation_status'] = None
         return super().changelist_view(request, extra_context)

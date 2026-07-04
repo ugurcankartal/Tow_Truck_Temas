@@ -174,13 +174,13 @@
           id="groq-progress-root"
           class="groq-progress-wrap"
           data-status-url="{{ groq_translate_status_url }}"
-          data-status="{{ groq_translation_progress.status|default:'idle' }}"
+          data-status="{% if groq_translation_progress %}{{ groq_translation_progress.status }}{% else %}idle{% endif %}"
         >
           <div class="groq-progress-track">
             <div
               id="groq-progress-bar"
               class="groq-progress-bar"
-              style="width: {{ groq_translation_progress.percent|default:0 }}%;"
+              style="width: {% if groq_translation_progress %}{{ groq_translation_progress.percent }}{% else %}0{% endif %}%;"
             ></div>
           </div>
           <div class="groq-progress-meta">
@@ -188,7 +188,7 @@
               Hazirlaniyor…
             </span>
             <span id="groq-progress-percent" class="groq-progress-percent">
-              {{ groq_translation_progress.percent|default:0 }}%
+              {% if groq_translation_progress %}{{ groq_translation_progress.percent }}{% else %}0{% endif %}%
             </span>
           </div>
           <ul id="groq-progress-errors" class="groq-progress-errors"></ul>

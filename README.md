@@ -47,6 +47,11 @@ sudo chown -R ubuntu:ubuntu /home/ubuntu/Tow_Truck_Temas/frontend
 sudo -u ubuntu npm run build:prod
 
 sudo chmod 755 /home/ubuntu
+mkdir -p /home/ubuntu/Tow_Truck_Temas/backend/cache/django
+mkdir -p /home/ubuntu/Tow_Truck_Temas/backend/logs
+chown -R www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/cache
+chown -R www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/logs
+chmod -R u+rwX,g+rX /home/ubuntu/Tow_Truck_Temas/backend/cache
 ```
 
 **Önemli:** Önyüz statik (`frontend/dist`). Admin’de metin/resim değişince otomatik yansıması için **Astro rebuild webhook** servisini kurun (aşağıya bakın).
