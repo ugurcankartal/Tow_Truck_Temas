@@ -1,6 +1,9 @@
 from django.conf import settings as django_settings
 from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -53,12 +56,17 @@ class SiteSettingsAPIView(APIView):
         return response
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ContactAPIView(APIView):
     """
     POST /api/v1/contact/
 
     İletişim formu — Astro frontend'den JSON gönderilir.
+    CSRF: statik siteden same-origin JSON POST (token yok); halka açık uç nokta.
     """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request):
         lang = resolve_request_language(request)
