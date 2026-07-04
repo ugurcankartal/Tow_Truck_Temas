@@ -11,13 +11,21 @@ import json
 import logging
 import subprocess
 import threading
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 from django.conf import settings
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
+
+_CACHE_LATEST = 'astro_rebuild:latest'
+_CACHE_SCHEDULER = 'astro_rebuild:scheduler'
+_DEBOUNCE_SECONDS = 8.0
+_SCHEDULER_TTL = 30
 
 
 def _post_webhook(source: str, updated_at: str | None = None) -> bool:
@@ -84,6 +92,7 @@ def _run_local_build() -> bool:
 
 
 def _execute_rebuild(source: str, updated_at: str | None = None) -> None:
+    logger.info('Astro rebuild çalıştırılıyor: %s', source)
     webhook_ok = _post_webhook(source, updated_at)
     local_ok = _run_local_build()
 
@@ -91,48 +100,74 @@ def _execute_rebuild(source: str, updated_at: str | None = None) -> None:
         if not getattr(settings, 'ASTRO_REBUILD_WEBHOOK_URL', '') and not getattr(
             settings, 'ASTRO_REBUILD_LOCAL', False
         ):
-            logger.debug(
+            logger.warning(
                 'Astro rebuild atlandı (ASTRO_REBUILD_WEBHOOK_URL ve ASTRO_REBUILD_LOCAL kapalı): %s',
                 source,
             )
 
 
+def _cache_set(key: str, value: Any, timeout: int) -> None:
+    try:
+        cache.set(key, value, timeout)
+    except Exception:
+        pass
+
+
+def _cache_add(key: str, value: Any, timeout: int) -> bool:
+    try:
+        return cache.add(key, value, timeout)
+    except Exception:
+        return True
+
+
+def _cache_get(key: str, default=None):
+    try:
+        return cache.get(key, default)
+    except Exception:
+        return default
+
+
+def _cache_delete(key: str) -> None:
+    try:
+        cache.delete(key)
+    except Exception:
+        pass
+
+
+def _debounced_worker(initial_source: str, initial_updated_at: str | None) -> None:
+    try:
+        time.sleep(_DEBOUNCE_SECONDS)
+        payload = _cache_get(_CACHE_LATEST) or {}
+        source = payload.get('source') or initial_source
+        updated_at = payload.get('updated_at', initial_updated_at)
+        _execute_rebuild(source, updated_at)
+    finally:
+        _cache_delete(_CACHE_SCHEDULER)
+
+
 def trigger_astro_rebuild(source: str, updated_at: str | None = None, *, async_run: bool = True) -> None:
     """
     İçerik değişikliğinde Astro rebuild tetikler.
-    Varsayılan: debounce + arka plan thread (admin kaydını bloklamaz).
+    Varsayılan: paylaşımlı cache ile debounce + daemon thread (Gunicorn uyumlu).
     """
     if not async_run:
         _execute_rebuild(source, updated_at)
         return
 
-    _schedule_debounced_rebuild(source, updated_at)
+    _cache_set(
+        _CACHE_LATEST,
+        {'source': source, 'updated_at': updated_at},
+        300,
+    )
 
+    if not _cache_add(_CACHE_SCHEDULER, source, _SCHEDULER_TTL):
+        logger.debug('Astro rebuild debounce: mevcut zamanlayıcı kullanılıyor (%s)', source)
+        return
 
-_DEBOUNCE_SECONDS = 8.0
-_rebuild_lock = threading.Lock()
-_rebuild_timer: threading.Timer | None = None
-_pending_source = 'model_change'
-_pending_updated_at: str | None = None
-
-
-def _fire_debounced_rebuild() -> None:
-    global _pending_source, _pending_updated_at
-    with _rebuild_lock:
-        source = _pending_source
-        updated_at = _pending_updated_at
-    _execute_rebuild(source, updated_at)
-
-
-def _schedule_debounced_rebuild(source: str, updated_at: str | None) -> None:
-    global _rebuild_timer, _pending_source, _pending_updated_at
-
-    with _rebuild_lock:
-        _pending_source = source
-        if updated_at:
-            _pending_updated_at = updated_at
-        if _rebuild_timer is not None:
-            _rebuild_timer.cancel()
-        _rebuild_timer = threading.Timer(_DEBOUNCE_SECONDS, _fire_debounced_rebuild)
-        _rebuild_timer.daemon = True
-        _rebuild_timer.start()
+    thread = threading.Thread(
+        target=_debounced_worker,
+        args=(source, updated_at),
+        daemon=True,
+        name='astro-rebuild-worker',
+    )
+    thread.start()
