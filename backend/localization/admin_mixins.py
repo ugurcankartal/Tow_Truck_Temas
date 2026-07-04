@@ -70,7 +70,9 @@ class GroqTranslateAdminMixin:
                 return self._groq_translate_ajax(ok=False, message=msg, status='running')
             messages.warning(request, msg)
         elif outcome == 'spawn_error':
-            msg = 'Groq çevirisi başlatılamadı. Sunucu loglarını kontrol edin.'
+            cached = get_groq_translation_status(handler_name) or {}
+            detail = cached.get('error') or ''
+            msg = detail or 'Groq çevirisi başlatılamadı. Sunucu loglarını kontrol edin.'
             if is_ajax:
                 return self._groq_translate_ajax(ok=False, message=msg)
             messages.error(request, msg)

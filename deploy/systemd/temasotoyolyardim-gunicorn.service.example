@@ -18,6 +18,11 @@ EnvironmentFile=-/home/ubuntu/Tow_Truck_Temas/backend/.env
 Environment=DJANGO_SETTINGS_MODULE=config.settings.prod
 Environment=APP_ROOT=/home/ubuntu/Tow_Truck_Temas
 
+# Groq arka plan çevirisi backend/logs/ altına yazar (www-data yazabilmeli).
+ExecStartPre=/bin/mkdir -p /home/ubuntu/Tow_Truck_Temas/backend/logs
+ExecStartPre=/bin/chown www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/logs
+ExecStartPre=/bin/chmod 750 /home/ubuntu/Tow_Truck_Temas/backend/logs
+
 ExecStart=/home/ubuntu/Tow_Truck_Temas/venv/bin/gunicorn \
     --config /home/ubuntu/Tow_Truck_Temas/deploy/gunicorn/temasotoyolyardim.py \
     config.wsgi:application

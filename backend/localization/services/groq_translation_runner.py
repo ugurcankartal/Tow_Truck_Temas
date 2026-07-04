@@ -135,6 +135,10 @@ def promote_groq_lock_to_running(handler: str) -> None:
 
 
 def _resolve_python(backend_dir: Path) -> str:
+    # Gunicorn/worker ile aynı yorumlayıcı (prod venv yolu systemd ile uyumlu).
+    if sys.executable:
+        return sys.executable
+
     project_root = backend_dir.parent
     if os.name == 'nt':
         candidates = [
