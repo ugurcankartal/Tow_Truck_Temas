@@ -99,3 +99,22 @@ chmod -R o+rX /home/ubuntu/Tow_Truck_Temas/frontend/dist
 4. Admin’de Site Ayarları kaydedin → birkaç saniye sonra view-source’ta SEO/JSON-LD güncellenmiş olmalı.
 
 Manuel tetikleme: `python manage_prod.py trigger_astro_rebuild --sync`
+
+### Medya dosyaları 404 (logo / favicon)
+
+Prod'da `DEBUG=False` iken Django `/media/` URL'lerini sunmaz. Nginx doğrudan diskten vermeli:
+
+```nginx
+location /media/ {
+    alias /home/ubuntu/Tow_Truck_Temas/backend/media/;
+}
+```
+
+Sunucuda nginx config güncelleyip `nginx -t && systemctl reload nginx`. Dosyaların varlığı:
+
+```bash
+ls -la /home/ubuntu/Tow_Truck_Temas/backend/media/site_logo/2026/07/
+chown -R www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/media
+```
+
+Dosya yoksa admin'den yeniden yükleyin (sunucu sıfırlandıysa media git'te değildir). Sonra `trigger_astro_rebuild --sync`.

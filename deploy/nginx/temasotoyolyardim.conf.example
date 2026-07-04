@@ -12,6 +12,12 @@
 #   backend       → python manage.py collectstatic --noinput
 #   Gunicorn      → deploy/systemd/temasotoyolyardim-gunicorn.service.example
 #
+# Medya (logo, favicon, görseller):
+#   mkdir -p /home/ubuntu/Tow_Truck_Temas/backend/media
+#   chown -R www-data:www-data /home/ubuntu/Tow_Truck_Temas/backend/media
+#   chmod -R u+rwX,g+rX,o+rX /home/ubuntu/Tow_Truck_Temas/backend/media
+#   nginx location /media/ → alias (aşağıda); prod'da Django /media/ sunmaz (DEBUG=False)
+#
 # Kurulum:
 #   sudo cp deploy/nginx/temasotoyolyardim.conf.example /etc/nginx/sites-available/temasotoyolyardim
 #   sudo ln -sf /etc/nginx/sites-available/temasotoyolyardim /etc/nginx/sites-enabled/
@@ -70,17 +76,10 @@ server {
     }
 
     location /media/ {
-        proxy_pass http://django_backend;
-        proxy_redirect off;
-
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 300s;
-        proxy_read_timeout 300s;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        alias /home/ubuntu/Tow_Truck_Temas/backend/media/;
+        expires 7d;
+        add_header Cache-Control "public";
+        # www-data (gunicorn) yükler, nginx okur — proxy_pass Django'ya DEĞİL (prod DEBUG=False)
     }
 
     location = /robots.txt {
