@@ -40,9 +40,9 @@ const contacts = business.contacts;
       <!-- Services areas -->
       <div>
         <h2 class="mb-4 font-display text-sm font-semibold tracking-widest text-white uppercase">{ui.footer.areasTitle}</h2>
-        <ul class="flex flex-col gap-2" role="list">
-          {business.areaServed.slice(0, 6).map((area) => (
-            <li class="text-sm text-slate-400">{area}</li>
+        <ul class="grid grid-cols-4 gap-x-3 gap-y-2" role="list">
+          {business.areaServed.map((area) => (
+            <li class="text-xs text-slate-400 sm:text-sm">{area}</li>
           ))}
         </ul>
       </div>
