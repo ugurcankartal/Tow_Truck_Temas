@@ -1,5 +1,7 @@
 ---
+import ContactLink from '@/components/ContactLink.astro';
 import type { BusinessView, ShowcaseServices, ShowcaseStat, SiteFaq } from '@/lib/site-settings';
+import { getPrimaryContact } from '@/lib/site-settings';
 import type { Locale, UiMessages } from '@/i18n';
 
 interface Props {
@@ -13,13 +15,14 @@ interface Props {
 
 const { business, faqs, showcaseStats, showcaseServices, locale, ui } = Astro.props;
 const fullAddress = `${business.address.street}, ${business.address.district}, ${business.address.city}`;
+const primaryContact = getPrimaryContact(business);
 /** Göreli URL — tarayıcı aynı origin üzerinden /api/ proxy kullanır (127.0.0.1 build URL'si gömülmez). */
 const contactApiUrl = `/api/v1/contact/?lang=${locale}`;
 const formMessages = {
   sending: ui.services.sending,
   success: ui.services.success,
   error: ui.services.error,
-  errorFallback: `${ui.services.errorFallback} ${business.phone}`,
+  errorFallback: `${ui.services.errorFallback} ${primaryContact?.value ?? business.phone}`,
 };
 ---
 
@@ -93,13 +96,13 @@ const formMessages = {
         </h2>
 
         <address class="mt-6 flex flex-1 flex-col gap-5 not-italic">
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
-            <p class="text-xs font-semibold tracking-widest text-slate-400 uppercase">{ui.services.phone}</p>
-            <a href={business.phoneHref} class="mt-1 block font-display text-2xl font-bold text-slate-900 hover:text-amber-600">
-              {business.phone}
-            </a>
-            <p class="mt-1 text-sm text-slate-500">{ui.services.phoneHint}</p>
-          </div>
+          {business.contacts.map((contact, i) => (
+            <ContactLink
+              contact={contact}
+              variant="card"
+              hint={i <= 1 ? ui.services.phoneHint : undefined}
+            />
+          ))}
 
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">

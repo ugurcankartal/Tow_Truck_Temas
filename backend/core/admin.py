@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
 
 from localization.admin_helpers import (
@@ -13,9 +14,29 @@ from .models import (
     ContactMessage,
     FAQ,
     FAQTranslation,
+    SiteContact,
+    SiteContactTranslation,
     SiteSettings,
     SiteSettingsTranslation,
 )
+
+
+class SiteContactTranslationInline(admin.TabularInline):
+    model = SiteContactTranslation
+    extra = 0
+    fields = ('language', 'label')
+
+
+class SiteContactInline(admin.TabularInline):
+    model = SiteContact
+    fk_name = 'settings'
+    extra = 1
+    min_num = 0
+    verbose_name = 'İletişim'
+    verbose_name_plural = 'İletişim bilgileri'
+    fields = ('label', 'contact_type', 'value', 'order', 'is_active', 'is_primary')
+    ordering = ('order', 'id')
+    show_change_link = True
 
 
 class SiteSettingsTranslationInline(admin.StackedInline):
@@ -39,6 +60,23 @@ class SiteSettingsTranslationInline(admin.StackedInline):
         'hero_intro_body',
         'area_served',
     )
+
+
+@admin.register(SiteContact)
+class SiteContactAdmin(admin.ModelAdmin):
+    list_display = ('label', 'value', 'contact_type', 'order', 'is_active', 'is_primary', 'settings')
+    list_editable = ('order', 'is_active', 'is_primary')
+    list_filter = ('contact_type', 'is_active', 'is_primary')
+    search_fields = ('label', 'value')
+    inlines = [SiteContactTranslationInline]
+
+
+@admin.register(SiteContactTranslation)
+class SiteContactTranslationAdmin(GroqTranslateAdminMixin, TranslationAdminMixin, admin.ModelAdmin):
+    groq_translation_handler = 'site_contact'
+    list_display = ('contact', 'language', 'label')
+    search_fields = ('label', 'contact__label', 'contact__value')
+    autocomplete_fields = ('contact', 'language')
 
 
 @admin.register(SiteSettingsTranslation)
@@ -66,9 +104,10 @@ class SiteSettingsTranslationAdmin(GroqTranslateAdminMixin, TranslationAdminMixi
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     form = SiteSettingsAdminForm
-    inlines = [SiteSettingsTranslationInline]
+    change_form_template = 'admin/core/sitesettings/change_form.html'
+    inlines = [SiteContactInline, SiteSettingsTranslationInline]
     search_fields = ('business_name', 'legal_name', 'meta_title')
-    readonly_fields = ('updated_at', 'logo_preview', 'favicon_preview', 'translations_admin_link')
+    readonly_fields = ('updated_at', 'logo_preview', 'favicon_preview', 'translations_admin_link', 'contacts_admin_link')
     fieldsets = (
         ('Çeviriler', {
             'fields': ('translations_admin_link',),
@@ -81,7 +120,11 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             ),
         }),
         ('İşletme', {
-            'fields': ('business_name', 'legal_name', 'tagline', 'phone', 'email'),
+            'fields': ('business_name', 'legal_name', 'tagline', 'email', 'contacts_admin_link'),
+            'description': (
+                'Hemen altındaki “İletişim bilgileri” tablosundan telefon, WhatsApp vb. '
+                'satırları ekleyin. Tablo görünmüyorsa “İletişim kayıtları” linkini kullanın.'
+            ),
         }),
         ('Hero Giriş Metni', {
             'fields': ('hero_intro_badge', 'hero_intro_title', 'hero_intro_body'),
@@ -146,6 +189,18 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             label='Tümünü gör',
         )
         return format_html('{} · {}', filtered, all_link)
+
+    @admin.display(description='İletişim kayıtları')
+    def contacts_admin_link(self, obj):
+        if not obj or not obj.pk:
+            return '—'
+        list_url = reverse('admin:core_sitecontact_changelist') + f'?settings__id__exact={obj.pk}'
+        add_url = reverse('admin:core_sitecontact_add') + f'?settings={obj.pk}'
+        return format_html(
+            '<a href="{}">Kayıtları yönet</a> · <a href="{}">Yeni iletişim ekle</a>',
+            list_url,
+            add_url,
+        )
 
     @admin.display(description='Önizleme')
     def logo_preview(self, obj):

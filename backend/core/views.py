@@ -42,7 +42,10 @@ class SiteSettingsAPIView(APIView):
 
     def get(self, request):
         lang = resolve_request_language(request)
-        settings = SiteSettings.objects.prefetch_related('translations__language').get(pk=1)
+        settings = SiteSettings.objects.prefetch_related(
+            'translations__language',
+            'contacts__translations__language',
+        ).get(pk=1)
         serializer = SiteSettingsSerializer(
             settings,
             context={'request': request, 'language_code': lang},

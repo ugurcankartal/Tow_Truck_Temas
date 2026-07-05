@@ -1,5 +1,6 @@
 ---
 import BrandLogo from '@/components/BrandLogo.astro';
+import ContactLink from '@/components/ContactLink.astro';
 import type { BusinessView } from '@/lib/site-settings';
 import { renderFooterCopyright } from '@/lib/site-settings';
 import type { UiMessages } from '@/i18n';
@@ -12,6 +13,7 @@ interface Props {
 const { business, ui } = Astro.props;
 const fullAddress = `${business.address.street}, ${business.address.district}, ${business.address.city}`;
 const copyrightText = renderFooterCopyright(business.footerCopyright, business.legalName);
+const contacts = business.contacts;
 ---
 
 <footer
@@ -50,10 +52,9 @@ const copyrightText = renderFooterCopyright(business.footerCopyright, business.l
         <h2 class="mb-4 font-display text-sm font-semibold tracking-widest text-white uppercase">{ui.footer.contactTitle}</h2>
         <address class="not-italic">
           <ul class="flex flex-col gap-3 text-sm" role="list">
-            <li>
-              <span class="block text-xs text-slate-500 uppercase">{ui.footer.phone}</span>
-              <a href={business.phoneHref} class="font-semibold text-white hover:text-amber-400">{business.phone}</a>
-            </li>
+            {contacts.map((contact) => (
+              <ContactLink contact={contact} variant="footer-li" />
+            ))}
             <li>
               <span class="block text-xs text-slate-500 uppercase">{ui.footer.email}</span>
               <a href={`mailto:${business.email}`} class="text-slate-300 hover:text-amber-400">{business.email}</a>
@@ -77,15 +78,11 @@ const copyrightText = renderFooterCopyright(business.footerCopyright, business.l
         <p class="font-display text-xl font-bold text-white">{ui.footer.ctaTitle}</p>
         <p class="mt-1 text-sm text-slate-400">{ui.footer.ctaSubtitle}</p>
       </div>
-      <a
-        href={business.phoneHref}
-        class="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-400"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
-          <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
-        </svg>
-        {business.phone}
-      </a>
+      <div class="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
+        {contacts.map((contact) => (
+          <ContactLink contact={contact} variant="footer-cta" />
+        ))}
+      </div>
     </div>
   </div>
 

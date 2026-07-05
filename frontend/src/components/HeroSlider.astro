@@ -1,7 +1,8 @@
 ---
+import ContactLink from '@/components/ContactLink.astro';
 import type { BusinessView, HeroIntro, HeroSlide } from '@/lib/site-settings';
 import { repairIcons } from '@/data/repair-icons';
-import { getUi, type UiMessages } from '@/i18n';
+import type { UiMessages } from '@/i18n';
 
 interface Props {
   business: BusinessView;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const { business, slides, heroIntro, ui } = Astro.props;
+const contacts = business.contacts;
 ---
 
 <section
@@ -89,15 +91,9 @@ const { business, slides, heroIntro, ui } = Astro.props;
       <div class="animate-fade-up-delay flex flex-col justify-center gap-3 sm:gap-4">
         <div class="hero-intro-body" set:html={heroIntro.body_html} />
         <div class="flex flex-wrap gap-3 pt-0 sm:pt-1">
-          <a
-            href={business.phoneHref}
-            class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-lg sm:w-auto sm:py-3"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
-              <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
-            </svg>
-            {ui.hero.callNow}
-          </a>
+          {contacts.map((contact) => (
+            <ContactLink contact={contact} variant="hero" />
+          ))}
         </div>
       </div>
     </div>

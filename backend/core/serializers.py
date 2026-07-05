@@ -5,6 +5,7 @@ from rest_framework import serializers
 from content.models import ContentZone, SiteImage, SiteImagePlacement
 from showcase.models import ShowcaseService, ShowcaseServiceSection, ShowcaseStat
 
+from .contact_utils import primary_contact, serialize_site_contacts
 from .hero_content import hero_body_html, hero_title_html
 from .i18n import localized_text
 from .models import ContactMessage, FAQ, SiteSettings
@@ -170,8 +171,10 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
 
     def get_business(self, obj):
         request = self.context.get('request')
-        phone_digits = re.sub(r'\D', '', obj.phone)
-        trans = obj.get_translation(self._lang())
+        lang = self._lang()
+        contacts = serialize_site_contacts(obj, lang)
+        primary = primary_contact(contacts) or {}
+        trans = obj.get_translation(lang)
         area_served = (
             trans.area_served if trans and trans.area_served
             else obj.area_served or []
@@ -181,8 +184,9 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             'legal_name': self._settings_text(obj, 'legal_name'),
             'tagline': self._settings_text(obj, 'tagline'),
             'logo_url': obj.get_resolved_logo_url(request),
-            'phone': obj.phone,
-            'phone_href': f'tel:+{phone_digits}' if phone_digits else '',
+            'contacts': contacts,
+            'phone': primary.get('value', ''),
+            'phone_href': primary.get('href', ''),
             'email': obj.email,
             'address': {
                 'street': self._settings_text(obj, 'street'),
@@ -261,6 +265,8 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         lang = self._lang()
         site_id = obj.site_url.rstrip('/')
         faq_data = FAQSerializer(faqs, many=True, context={'language_code': lang}).data
+        contacts = serialize_site_contacts(obj, lang)
+        primary = primary_contact(contacts) or {}
 
         return {
             '@context': 'https://schema.org',
@@ -272,7 +278,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
                     'legalName': self._settings_text(obj, 'legal_name'),
                     'description': self._settings_text(obj, 'meta_description'),
                     'url': obj.site_url,
-                    'telephone': obj.phone,
+                    'telephone': primary.get('value', ''),
                     'email': obj.email,
                     'image': obj.og_image_url or f'{site_id}/og-image.jpg',
                     'priceRange': obj.price_range,

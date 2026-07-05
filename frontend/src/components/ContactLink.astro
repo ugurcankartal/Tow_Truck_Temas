@@ -1,0 +1,109 @@
+---
+import type { ContactView } from '@/lib/site-settings';
+
+interface Props {
+  contact: ContactView;
+  variant: 'nav' | 'hero' | 'card' | 'footer-li' | 'footer-cta';
+  class?: string;
+  hint?: string;
+  showIcon?: boolean;
+}
+
+const { contact, variant, class: className, hint, showIcon = true } = Astro.props;
+const href = contact.href || '#';
+---
+
+{
+  variant === 'nav' && (
+    <a
+      href={href}
+      class:list={[
+        'inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:border-amber-300 hover:shadow-md sm:px-4',
+        className,
+      ]}
+    >
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white" aria-hidden="true">
+        {showIcon ? (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
+            <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
+          </svg>
+        ) : (
+          <span class="text-[10px] font-bold">•</span>
+        )}
+      </span>
+      <span class="flex flex-col leading-tight">
+        <span class="text-[10px] font-medium tracking-wide text-slate-500">{contact.label}</span>
+        <span>{contact.value}</span>
+      </span>
+    </a>
+  )
+}
+
+{
+  variant === 'hero' && (
+    <a
+      href={href}
+      class:list={[
+        'inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-lg sm:w-auto sm:py-3',
+        className,
+      ]}
+    >
+      <span class="text-[10px] font-medium tracking-wide text-slate-400">{contact.label}</span>
+      <span class="inline-flex items-center gap-2 text-base">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+          <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
+        </svg>
+        {contact.value}
+      </span>
+    </a>
+  )
+}
+
+{
+  variant === 'card' && (
+    <div class="rounded-xl border border-slate-100 bg-slate-50 p-5">
+      <p class="text-xs font-semibold tracking-widest text-slate-400">{contact.label}</p>
+      {contact.href ? (
+        <a href={href} class="mt-1 block font-display text-2xl font-bold text-slate-900 hover:text-amber-600">
+          {contact.value}
+        </a>
+      ) : (
+        <p class="mt-1 font-display text-2xl font-bold text-slate-900">{contact.value}</p>
+      )}
+      {hint && <p class="mt-1 text-sm text-slate-500">{hint}</p>}
+    </div>
+  )
+}
+
+{
+  variant === 'footer-li' && (
+    <li>
+      <span class="block text-xs text-slate-500">{contact.label}</span>
+      {contact.href ? (
+        <a href={href} class="font-semibold text-white hover:text-amber-400">{contact.value}</a>
+      ) : (
+        <span class="text-slate-300">{contact.value}</span>
+      )}
+    </li>
+  )
+}
+
+{
+  variant === 'footer-cta' && (
+    <a
+      href={href}
+      class:list={[
+        'inline-flex shrink-0 flex-col items-center gap-0.5 rounded-full bg-amber-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-400 sm:items-start',
+        className,
+      ]}
+    >
+      <span class="inline-flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+          <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c1.067 2.17 2.767 3.87 4.937 4.937l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-7.456 0-13.5-6.044-13.5-13.5V4.5A1.5 1.5 0 012 3.5z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-wide text-amber-100">{contact.label}</span>
+      </span>
+      <span>{contact.value}</span>
+    </a>
+  )
+}

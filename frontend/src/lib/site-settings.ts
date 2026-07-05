@@ -15,10 +15,21 @@ export interface SiteSeo {
   site_url: string;
 }
 
+export interface SiteContact {
+  id: number;
+  label: string;
+  value: string;
+  href: string;
+  contact_type: string;
+  is_primary: boolean;
+  order: number;
+}
+
 export interface SiteBusiness {
   name: string;
   legal_name: string;
   tagline: string;
+  contacts: SiteContact[];
   phone: string;
   phone_href: string;
   email: string;
@@ -112,11 +123,23 @@ export interface SiteSettingsResponse {
   language?: string;
 }
 
+/** Bileşenlerde kullanılan camelCase iletişim tipi */
+export interface ContactView {
+  id: number;
+  label: string;
+  value: string;
+  href: string;
+  contactType: string;
+  isPrimary: boolean;
+  order: number;
+}
+
 /** Bileşenlerde kullanılan camelCase işletme tipi */
 export interface BusinessView {
   name: string;
   legalName: string;
   tagline: string;
+  contacts: ContactView[];
   phone: string;
   phoneHref: string;
   email: string;
@@ -161,6 +184,7 @@ export function renderFooterCopyright(template: string, legalName: string): stri
 function buildFallbackJsonLd(): Record<string, unknown> {
   const b = fallbackBusiness;
   const siteId = getPublicSiteUrl();
+  const primary = b.contacts.find((c) => c.isPrimary) ?? b.contacts[0];
 
   return {
     '@context': 'https://schema.org',
@@ -169,7 +193,7 @@ function buildFallbackJsonLd(): Record<string, unknown> {
         '@type': 'LocalBusiness',
         '@id': `${siteId}/#business`,
         name: b.name,
-        telephone: b.phone,
+        telephone: primary?.value ?? b.phone,
         email: b.email,
         url: siteId,
       },
@@ -206,6 +230,15 @@ function getFallbackSettings(locale: Locale = 'tr'): SiteSettingsResponse {
       name: b.name,
       legal_name: b.legalName,
       tagline: b.tagline,
+      contacts: b.contacts.map((c) => ({
+        id: c.id,
+        label: c.label,
+        value: c.value,
+        href: c.href,
+        contact_type: c.contactType,
+        is_primary: c.isPrimary,
+        order: c.order,
+      })),
       phone: b.phone,
       phone_href: b.phoneHref,
       email: b.email,
@@ -280,13 +313,64 @@ function getFallbackSettings(locale: Locale = 'tr'): SiteSettingsResponse {
   };
 }
 
+export function mapContact(api: SiteContact): ContactView {
+  return {
+    id: api.id,
+    label: api.label,
+    value: api.value,
+    href: api.href,
+    contactType: api.contact_type,
+    isPrimary: api.is_primary,
+    order: api.order,
+  };
+}
+
+function buildPhoneHref(phone: string, phoneHref: string): string {
+  if (phoneHref) return phoneHref;
+  const digits = phone.replace(/\D/g, '');
+  return digits ? `tel:+${digits}` : '';
+}
+
+/** API contacts boş ama phone alanları doluysa (eski build / geçiş dönemi). */
+function fallbackContactsFromPhone(api: SiteBusiness): ContactView[] {
+  const phone = (api.phone ?? '').trim();
+  if (!phone) return [];
+  return [
+    {
+      id: 0,
+      label: 'Telefon',
+      value: phone,
+      href: buildPhoneHref(phone, api.phone_href ?? ''),
+      contactType: 'phone',
+      isPrimary: true,
+      order: 0,
+    },
+  ];
+}
+
+function pickPrimaryContact(contacts: ContactView[]): ContactView | undefined {
+  return (
+    contacts.find((c) => c.isPrimary) ??
+    contacts.find((c) => c.contactType === 'phone') ??
+    contacts[0]
+  );
+}
+
+export function getPrimaryContact(business: BusinessView): ContactView | undefined {
+  return pickPrimaryContact(business.contacts);
+}
+
 export function mapBusiness(api: SiteBusiness): BusinessView {
+  const mapped = (api.contacts ?? []).map(mapContact);
+  const contacts = mapped.length > 0 ? mapped : fallbackContactsFromPhone(api);
+  const primary = pickPrimaryContact(contacts);
   return {
     name: api.name,
     legalName: api.legal_name,
     tagline: api.tagline,
-    phone: api.phone,
-    phoneHref: api.phone_href,
+    contacts,
+    phone: primary?.value ?? api.phone ?? '',
+    phoneHref: primary?.href ?? api.phone_href ?? '',
     email: api.email,
     address: {
       street: api.address.street,

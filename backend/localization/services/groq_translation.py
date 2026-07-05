@@ -759,8 +759,34 @@ def translate_ui_strings(
     return total if dry_run else stats
 
 
+def translate_site_contact(
+    source_language: Language,
+    target_languages: list[Language],
+    *,
+    stats: dict[str, int] | None = None,
+    progress: GroqTranslationProgress | None = None,
+    dry_run: bool = False,
+) -> dict[str, int] | int:
+    from core.models import SiteContactTranslation
+
+    return _run_model_handler(
+        SiteContactTranslation,
+        'contact',
+        ['label'],
+        source_language=source_language,
+        target_languages=target_languages,
+        stats=stats,
+        progress=progress,
+        dry_run=dry_run,
+        context=SITE_CONTEXT + ' Short contact field labels (Phone, WhatsApp, Emergency line).',
+        progress_label='İletişim etiketi',
+        row_transform=_merge_parent_source('contact'),
+    )
+
+
 HANDLERS = {
     'site_settings': translate_site_settings,
+    'site_contact': translate_site_contact,
     'faq': translate_faq,
     'content_zone': translate_content_zone,
     'site_image': translate_site_image,

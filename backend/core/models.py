@@ -46,7 +46,6 @@ class SiteSettings(TranslatableMixin, models.Model):
     business_name = models.CharField('İşletme adı', max_length=100)
     legal_name = models.CharField('Yasal unvan', max_length=150)
     tagline = models.CharField('Slogan', max_length=120)
-    phone = models.CharField('Telefon', max_length=20)
     email = models.EmailField('E-posta')
 
     street = models.CharField('Adres (sokak)', max_length=200)
@@ -182,7 +181,6 @@ class SiteSettings(TranslatableMixin, models.Model):
                 'business_name': 'Çekici Pro',
                 'legal_name': 'Çekici Pro Oto Kurtarma Ltd. Şti.',
                 'tagline': '7/24 Oto Çekici & Yol Yardım',
-                'phone': '+90 555 123 45 67',
                 'email': 'info@cekicipro.com',
                 'street': 'Atatürk Cad. No: 142',
                 'district': 'Kadıköy',
@@ -268,6 +266,108 @@ class SiteSettingsTranslation(models.Model):
 
     def __str__(self):
         return f'{self.settings} [{self.language.code}]'
+
+
+class SiteContact(TranslatableMixin, models.Model):
+    """Site ayarlarına bağlı iletişim satırı (telefon, e-posta, URL vb.)."""
+
+    TYPE_PHONE = 'phone'
+    TYPE_EMAIL = 'email'
+    TYPE_URL = 'url'
+    TYPE_TEXT = 'text'
+    TYPE_CHOICES = [
+        (TYPE_PHONE, 'Telefon'),
+        (TYPE_EMAIL, 'E-posta'),
+        (TYPE_URL, 'Web / URL'),
+        (TYPE_TEXT, 'Metin'),
+    ]
+
+    settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name='contacts',
+        verbose_name='Site ayarları',
+    )
+    contact_type = models.CharField(
+        'Tür',
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=TYPE_PHONE,
+    )
+    label = models.CharField(
+        'Etiket',
+        max_length=120,
+        help_text='Örn: Telefon, WhatsApp, Acil hat',
+    )
+    value = models.CharField('Değer', max_length=255)
+    order = models.PositiveIntegerField('Sıra', default=0)
+    is_active = models.BooleanField('Aktif', default=True)
+    is_primary = models.BooleanField(
+        'Birincil (nav/hero/CTA)',
+        default=False,
+        help_text='Üst menü, hero ve footer CTA için kullanılır.',
+    )
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = 'İletişim'
+        verbose_name_plural = 'İletişim bilgileri'
+
+    def __str__(self):
+        return f'{self.label}: {self.value}'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_primary:
+            SiteContact.objects.filter(
+                settings=self.settings,
+                is_primary=True,
+            ).exclude(pk=self.pk).update(is_primary=False)
+        self._sync_default_translation_label()
+
+    def _sync_default_translation_label(self):
+        """Inline'da düzenlenen etiket varsayılan dil çevirisine yansır."""
+        from localization.models import Language
+
+        default_lang = Language.objects.filter(is_active=True, is_default=True).first()
+        if not default_lang:
+            default_lang = Language.objects.filter(is_active=True, code='tr').first()
+        if not default_lang:
+            return
+        SiteContactTranslation.objects.update_or_create(
+            contact=self,
+            language=default_lang,
+            defaults={'label': self.label},
+        )
+
+
+class SiteContactTranslation(models.Model):
+    contact = models.ForeignKey(
+        SiteContact,
+        on_delete=models.CASCADE,
+        related_name='translations',
+        verbose_name='İletişim',
+    )
+    language = models.ForeignKey(
+        'localization.Language',
+        on_delete=models.CASCADE,
+        related_name='site_contact_translations',
+        verbose_name='Dil',
+    )
+    label = models.CharField('Etiket', max_length=120, blank=True)
+
+    class Meta:
+        verbose_name = 'İletişim çevirisi'
+        verbose_name_plural = 'İletişim çevirileri'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['contact', 'language'],
+                name='unique_site_contact_translation_per_language',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.contact_id} [{self.language.code}]'
 
 
 class FAQ(TranslatableMixin, models.Model):

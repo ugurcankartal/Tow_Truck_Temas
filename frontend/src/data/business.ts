@@ -2,6 +2,17 @@ export const business = {
   name: 'Çekici Pro',
   legalName: 'Çekici Pro Oto Kurtarma Ltd. Şti.',
   tagline: '7/24 Oto Çekici & Yol Yardım',
+  contacts: [
+    {
+      id: 1,
+      label: 'Telefon',
+      value: '+90 555 123 45 67',
+      href: 'tel:+905551234567',
+      contactType: 'phone',
+      isPrimary: true,
+      order: 0,
+    },
+  ],
   phone: '+90 555 123 45 67',
   phoneHref: 'tel:+905551234567',
   email: 'info@cekicipro.com',

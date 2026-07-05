@@ -1,0 +1,23 @@
+{% extends "admin/change_form.html" %}
+
+{# SiteContactInline listede birinci sırada; İşletme fieldset'inden hemen sonra render edilir. #}
+{% block field_sets %}
+  {% for fieldset in adminform %}
+    {% include "admin/includes/fieldset.html" %}
+    {% if forloop.counter0 == 2 %}
+      {% for inline_admin_formset in inline_admin_formsets %}
+        {% if forloop.first %}
+          {% include inline_admin_formset.opts.template %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+{% endblock %}
+
+{% block inline_field_sets %}
+  {% for inline_admin_formset in inline_admin_formsets %}
+    {% if not forloop.first %}
+      {% include inline_admin_formset.opts.template %}
+    {% endif %}
+  {% endfor %}
+{% endblock %}

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from content.models import ContentZone, SiteImage, SiteImagePlacement
-from core.models import FAQ, SiteSettings
+from core.models import FAQ, SiteContact, SiteSettings
 from showcase.models import ShowcaseService, ShowcaseServiceSection, ShowcaseStat
 
 DEFAULT_ZONES = [
@@ -192,7 +192,6 @@ DEFAULT_SITE_SETTINGS = {
     'business_name': 'Çekici Pro',
     'legal_name': 'Çekici Pro Oto Kurtarma Ltd. Şti.',
     'tagline': '7/24 Oto Çekici & Yol Yardım',
-    'phone': '+90 555 123 45 67',
     'email': 'info@cekicipro.com',
     'street': 'Atatürk Cad. No: 142',
     'district': 'Kadıköy',
@@ -224,6 +223,10 @@ DEFAULT_SITE_SETTINGS = {
         'memnuniyeti odaklı hizmet.</p>'
     ),
 }
+
+DEFAULT_CONTACTS = [
+    {'label': 'Telefon', 'value': '+90 555 123 45 67', 'order': 0},
+]
 
 
 def _is_empty(value) -> bool:
@@ -261,6 +264,15 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write('Site ayarları zaten dolu, atlandı')
+
+        if not SiteContact.objects.filter(settings=settings).exists():
+            for item in DEFAULT_CONTACTS:
+                SiteContact.objects.create(settings=settings, **item)
+            self.stdout.write(
+                self.style.SUCCESS(f'{len(DEFAULT_CONTACTS)} iletişim kaydı eklendi')
+            )
+        else:
+            self.stdout.write('İletişim kayıtları zaten mevcut, atlandı')
 
         zones_created = 0
         for zone_data in DEFAULT_ZONES:

@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 ASTRO_REBUILD_MODELS: tuple[tuple[str, str], ...] = (
     ('core', 'SiteSettings'),
     ('core', 'SiteSettingsTranslation'),
+    ('core', 'SiteContact'),
+    ('core', 'SiteContactTranslation'),
     ('core', 'FAQ'),
     ('core', 'FAQTranslation'),
     ('content', 'ContentZone'),
