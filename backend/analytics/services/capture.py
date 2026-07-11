@@ -36,6 +36,8 @@ class VisitCaptureData:
     screen_height: int | None = None
     viewport_width: int | None = None
     viewport_height: int | None = None
+    visit_source: str = SiteVisit.VisitSource.PUBLIC
+    is_staff_session: bool = False
 
 
 def _optional_int(value: Any) -> int | None:
@@ -98,6 +100,11 @@ def extract_visit_data(
         screen_height=_optional_int(extra.get('screen_height')),
         viewport_width=_optional_int(extra.get('viewport_width')),
         viewport_height=_optional_int(extra.get('viewport_height')),
+        visit_source=_optional_str(
+            extra.get('visit_source') or SiteVisit.VisitSource.PUBLIC,
+            20,
+        ) or SiteVisit.VisitSource.PUBLIC,
+        is_staff_session=bool(extra.get('is_staff_session')),
     )
 
 
@@ -146,6 +153,8 @@ def save_site_visit(data: VisitCaptureData, *, resolve_geo: bool = True) -> Site
             data.user_agent,
             data.session_key,
         )[:64],
+        visit_source=data.visit_source,
+        is_staff_session=data.is_staff_session,
     )
 
 

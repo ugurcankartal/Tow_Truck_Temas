@@ -11,6 +11,10 @@ class SiteVisit(models.Model):
         BOT = 'bot', 'Bot'
         OTHER = 'other', 'Diğer'
 
+    class VisitSource(models.TextChoices):
+        PUBLIC = 'public', 'Ön yüz'
+        ADMIN = 'admin', 'Admin panel'
+
     ip_address = models.GenericIPAddressField('IP adresi', null=True, blank=True, db_index=True)
 
     country = models.CharField('Ülke', max_length=100, blank=True)
@@ -62,6 +66,20 @@ class SiteVisit(models.Model):
 
     session_key = models.CharField('Oturum anahtarı', max_length=64, blank=True, db_index=True)
     visitor_key = models.CharField('Ziyaretçi anahtarı', max_length=64, blank=True, db_index=True)
+
+    visit_source = models.CharField(
+        'Kaynak',
+        max_length=20,
+        choices=VisitSource.choices,
+        default=VisitSource.PUBLIC,
+        db_index=True,
+    )
+    is_staff_session = models.BooleanField(
+        'Yetkili oturum',
+        default=False,
+        db_index=True,
+        help_text='Admin panelde giriş yapmış staff kullanıcı; kimlik bilgisi saklanmaz.',
+    )
 
     visited_at = models.DateTimeField('Ziyaret zamanı', auto_now_add=True, db_index=True)
 

@@ -34,6 +34,8 @@ class VisitedAtFilter(admin.SimpleListFilter):
 class SiteVisitAdmin(admin.ModelAdmin):
     list_display = (
         'visited_at',
+        'visit_source',
+        'is_staff_session',
         'ip_address',
         'country',
         'city',
@@ -45,6 +47,8 @@ class SiteVisitAdmin(admin.ModelAdmin):
     )
     list_filter = (
         VisitedAtFilter,
+        'visit_source',
+        'is_staff_session',
         'is_bot',
         'device_type',
         'country',
@@ -94,6 +98,8 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'viewport_height',
         'session_key',
         'visitor_key',
+        'visit_source',
+        'is_staff_session',
         'visited_at',
         'map_link',
     )
@@ -104,6 +110,8 @@ class SiteVisitAdmin(admin.ModelAdmin):
         ('Ziyaret', {
             'fields': (
                 'visited_at',
+                'visit_source',
+                'is_staff_session',
                 'path',
                 'full_url',
                 'referrer',

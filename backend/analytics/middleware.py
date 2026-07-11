@@ -4,13 +4,14 @@ import logging
 
 from django.conf import settings
 
+from analytics.models import SiteVisit
 from analytics.services.capture import record_site_visit
 
 logger = logging.getLogger(__name__)
 
 
 class VisitorTrackingMiddleware:
-    """Admin panel GET isteklerini arka planda SiteVisit olarak kaydeder."""
+    """Admin panel GET isteklerini anonim olarak kaydeder (superuser hariç)."""
 
     SKIP_PREFIXES = (
         '/static/',
@@ -32,8 +33,19 @@ class VisitorTrackingMiddleware:
 
         if should_track:
             try:
+                user = getattr(request, 'user', None)
+                is_staff_session = bool(
+                    user
+                    and user.is_authenticated
+                    and user.is_staff
+                    and not user.is_superuser
+                )
                 record_site_visit(
                     request,
+                    extra={
+                        'visit_source': SiteVisit.VisitSource.ADMIN,
+                        'is_staff_session': is_staff_session,
+                    },
                     resolve_geo=True,
                     background=True,
                     session_key=session_key,
@@ -51,4 +63,11 @@ class VisitorTrackingMiddleware:
         if not path.startswith('/admin/'):
             return False
 
-        return not any(path.startswith(prefix) for prefix in self.SKIP_PREFIXES)
+        if any(path.startswith(prefix) for prefix in self.SKIP_PREFIXES):
+            return False
+
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated and user.is_superuser:
+            return False
+
+        return True
