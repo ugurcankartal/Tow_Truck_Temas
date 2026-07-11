@@ -80,5 +80,8 @@ const alternateLanguages = activeLanguages.filter((l) => l.code !== locale);
   </head>
   <body>
     <slot />
+    <script>
+      import '@/scripts/visitor-track.ts';
+    </script>
   </body>
 </html>

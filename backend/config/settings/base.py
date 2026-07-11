@@ -37,6 +37,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'analytics.middleware.VisitorTrackingMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -133,6 +134,7 @@ VISITOR_GEO_API_URL = os.environ.get(
     'http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,region,'
     'regionName,city,zip,lat,lon,timezone,isp,org,query',
 )
+VISITOR_TRACKING_MIDDLEWARE = env_bool('VISITOR_TRACKING_MIDDLEWARE', True)
 
 
 def mysql_database(

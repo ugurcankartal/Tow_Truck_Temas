@@ -15,6 +15,10 @@ const siteUrl =
   process.env.SITE_URL ||
   process.env.PUBLIC_SITE_URL ||
   'http://localhost:4321';
+const apiProxyTarget =
+  process.env.PUBLIC_API_URL ||
+  process.env.PUBLIC_BUILD_API_URL ||
+  'http://127.0.0.1:8000';
 
 export default defineConfig({
   site: siteUrl,
@@ -22,5 +26,13 @@ export default defineConfig({
   adapter: isSSR ? node({ mode: 'standalone' }) : undefined,
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      proxy: {
+        '/api': {
+          target: apiProxyTarget,
+          changeOrigin: true,
+        },
+      },
+    },
   },
 });
