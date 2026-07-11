@@ -47,6 +47,7 @@ class VisitorTrackingMiddleware:
                         'visit_source': SiteVisit.VisitSource.ADMIN,
                         'is_staff_session': is_staff_session,
                         'staff_username': staff_username,
+                        'staff_user_id': user.pk if is_staff_session else None,
                     },
                     resolve_geo=True,
                     background=True,

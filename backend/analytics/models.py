@@ -86,6 +86,12 @@ class SiteVisit(models.Model):
         blank=True,
         db_index=True,
     )
+    staff_user_id = models.PositiveIntegerField(
+        'Staff kullanıcı ID',
+        null=True,
+        blank=True,
+        db_index=True,
+    )
 
     visited_at = models.DateTimeField('Ziyaret zamanı', auto_now_add=True, db_index=True)
 

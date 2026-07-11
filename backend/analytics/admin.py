@@ -1,10 +1,14 @@
 from datetime import timedelta
 
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import SiteVisit
+
+STAFF_USER_POPUP = "width=1100,height=800,resizable=yes,scrollbars=yes"
 
 
 class VisitedAtFilter(admin.SimpleListFilter):
@@ -102,7 +106,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'visitor_key',
         'visit_source',
         'is_staff_session',
-        'staff_username',
+        'staff_username_link',
         'visited_at',
         'map_link',
     )
@@ -115,7 +119,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
                 'visited_at',
                 'visit_source',
                 'is_staff_session',
-                'staff_username',
+                'staff_username_link',
                 'path',
                 'full_url',
                 'referrer',
@@ -174,13 +178,47 @@ class SiteVisitAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
 
-    @admin.display(description='Staff kullanıcı')
-    def staff_user_display(self, obj: SiteVisit):
+    def _resolve_staff_user_id(self, obj: SiteVisit) -> int | None:
+        if obj.staff_user_id:
+            return obj.staff_user_id
+        if not obj.staff_username:
+            return None
+        return (
+            get_user_model().objects.filter(username=obj.staff_username)
+            .values_list('pk', flat=True)
+            .first()
+        )
+
+    def _staff_user_label(self, obj: SiteVisit) -> str:
         if obj.staff_username:
             return obj.staff_username
         if obj.visit_source == SiteVisit.VisitSource.ADMIN:
             return 'Anonim'
         return '—'
+
+    @admin.display(description='Staff kullanıcı')
+    def staff_user_display(self, obj: SiteVisit):
+        return self._staff_user_label(obj)
+
+    @admin.display(description='Staff kullanıcı')
+    def staff_username_link(self, obj: SiteVisit):
+        label = self._staff_user_label(obj)
+        if label in ('—', 'Anonim'):
+            return label
+
+        user_id = self._resolve_staff_user_id(obj)
+        if not user_id:
+            return label
+
+        url = reverse('admin:auth_user_change', args=[user_id])
+        return format_html(
+            '<a href="{}" onclick="window.open(this.href, \'staffUserPopup_{}\', '
+            '\'{}\'); return false;">{}</a>',
+            url,
+            user_id,
+            STAFF_USER_POPUP,
+            label,
+        )
 
     @admin.display(description='Harita')
     def map_link(self, obj: SiteVisit):
