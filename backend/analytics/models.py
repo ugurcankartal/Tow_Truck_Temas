@@ -85,7 +85,6 @@ class SiteVisit(models.Model):
         max_length=150,
         blank=True,
         db_index=True,
-        help_text='Ziyaret anındaki kullanıcı adı (yalnızca staff; superuser kaydı tutulmaz).',
     )
 
     visited_at = models.DateTimeField('Ziyaret zamanı', auto_now_add=True, db_index=True)

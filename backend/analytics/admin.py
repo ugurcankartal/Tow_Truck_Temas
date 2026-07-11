@@ -45,6 +45,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'path',
         'is_bot',
     )
+    list_display_links = ('staff_user_display', 'visited_at')
     list_filter = (
         VisitedAtFilter,
         'visit_source',
@@ -166,6 +167,9 @@ class SiteVisitAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def has_view_permission(self, request, obj=None):
+        return super().has_view_permission(request, obj)
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
