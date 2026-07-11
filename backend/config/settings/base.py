@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'core',
     'content',
     'showcase',
+    'analytics',
 ]
 
 MIDDLEWARE = [
@@ -122,6 +123,16 @@ def env_bool(key: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.lower() in ('true', '1', 'yes')
+
+
+# Ziyaretçi analitiği — IP coğrafi konum (ip-api.com varsayılan)
+VISITOR_GEO_LOOKUP = env_bool('VISITOR_GEO_LOOKUP', True)
+VISITOR_GEO_TIMEOUT = int(os.environ.get('VISITOR_GEO_TIMEOUT', '2'))
+VISITOR_GEO_API_URL = os.environ.get(
+    'VISITOR_GEO_API_URL',
+    'http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,region,'
+    'regionName,city,zip,lat,lon,timezone,isp,org,query',
+)
 
 
 def mysql_database(

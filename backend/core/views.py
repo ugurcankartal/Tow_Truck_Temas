@@ -28,6 +28,7 @@ class APIRootView(APIView):
                 'i18n_bundle': request.build_absolute_uri(reverse('i18n-bundle')),
                 'robots_txt': request.build_absolute_uri(reverse('api-robots-txt')),
                 'sitemap_xml': request.build_absolute_uri(reverse('api-sitemap-xml')),
+                'analytics_visit': request.build_absolute_uri(reverse('analytics-visit')),
             },
         })
 

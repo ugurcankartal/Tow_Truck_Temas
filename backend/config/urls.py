@@ -11,6 +11,7 @@ urlpatterns = [
     path('sitemap.xml', sitemap_xml_view, name='sitemap-xml'),
     path('api/v1/', include('core.urls')),
     path('api/v1/', include('localization.api.urls')),
+    path('api/v1/', include('analytics.urls')),
 ]
 
 if settings.DEBUG:
