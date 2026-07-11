@@ -35,7 +35,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
     list_display = (
         'visited_at',
         'visit_source',
-        'is_staff_session',
+        'staff_user_display',
         'ip_address',
         'country',
         'city',
@@ -54,6 +54,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'country',
     )
     search_fields = (
+        'staff_username',
         'ip_address',
         'city',
         'country',
@@ -100,6 +101,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'visitor_key',
         'visit_source',
         'is_staff_session',
+        'staff_username',
         'visited_at',
         'map_link',
     )
@@ -112,6 +114,7 @@ class SiteVisitAdmin(admin.ModelAdmin):
                 'visited_at',
                 'visit_source',
                 'is_staff_session',
+                'staff_username',
                 'path',
                 'full_url',
                 'referrer',
@@ -166,6 +169,14 @@ class SiteVisitAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+    @admin.display(description='Staff kullanıcı')
+    def staff_user_display(self, obj: SiteVisit):
+        if obj.staff_username:
+            return obj.staff_username
+        if obj.visit_source == SiteVisit.VisitSource.ADMIN:
+            return 'Anonim'
+        return '—'
 
     @admin.display(description='Harita')
     def map_link(self, obj: SiteVisit):

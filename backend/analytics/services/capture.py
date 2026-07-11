@@ -38,6 +38,7 @@ class VisitCaptureData:
     viewport_height: int | None = None
     visit_source: str = SiteVisit.VisitSource.PUBLIC
     is_staff_session: bool = False
+    staff_username: str = ''
 
 
 def _optional_int(value: Any) -> int | None:
@@ -105,6 +106,7 @@ def extract_visit_data(
             20,
         ) or SiteVisit.VisitSource.PUBLIC,
         is_staff_session=bool(extra.get('is_staff_session')),
+        staff_username=_optional_str(extra.get('staff_username'), 150),
     )
 
 
@@ -155,6 +157,7 @@ def save_site_visit(data: VisitCaptureData, *, resolve_geo: bool = True) -> Site
         )[:64],
         visit_source=data.visit_source,
         is_staff_session=data.is_staff_session,
+        staff_username=data.staff_username,
     )
 
 

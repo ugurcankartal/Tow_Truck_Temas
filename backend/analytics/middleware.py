@@ -40,11 +40,13 @@ class VisitorTrackingMiddleware:
                     and user.is_staff
                     and not user.is_superuser
                 )
+                staff_username = user.get_username() if is_staff_session else ''
                 record_site_visit(
                     request,
                     extra={
                         'visit_source': SiteVisit.VisitSource.ADMIN,
                         'is_staff_session': is_staff_session,
+                        'staff_username': staff_username,
                     },
                     resolve_geo=True,
                     background=True,

@@ -78,7 +78,14 @@ class SiteVisit(models.Model):
         'Yetkili oturum',
         default=False,
         db_index=True,
-        help_text='Admin panelde giriş yapmış staff kullanıcı; kimlik bilgisi saklanmaz.',
+        help_text='Admin panelde giriş yapmış staff kullanıcı.',
+    )
+    staff_username = models.CharField(
+        'Staff kullanıcı',
+        max_length=150,
+        blank=True,
+        db_index=True,
+        help_text='Ziyaret anındaki kullanıcı adı (yalnızca staff; superuser kaydı tutulmaz).',
     )
 
     visited_at = models.DateTimeField('Ziyaret zamanı', auto_now_add=True, db_index=True)
