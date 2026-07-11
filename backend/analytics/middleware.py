@@ -24,11 +24,20 @@ class VisitorTrackingMiddleware:
 
     def __call__(self, request):
         should_track = self.enabled and self._should_track(request)
+        session_key = ''
+        if should_track and hasattr(request, 'session'):
+            session_key = request.session.session_key or ''
+
         response = self.get_response(request)
 
         if should_track:
             try:
-                record_site_visit(request, resolve_geo=True, background=True)
+                record_site_visit(
+                    request,
+                    resolve_geo=True,
+                    background=True,
+                    session_key=session_key,
+                )
             except Exception:
                 logger.exception('Admin visit tracking failed for %s', request.path)
 

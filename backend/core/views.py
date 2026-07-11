@@ -29,6 +29,7 @@ class APIRootView(APIView):
                 'robots_txt': request.build_absolute_uri(reverse('api-robots-txt')),
                 'sitemap_xml': request.build_absolute_uri(reverse('api-sitemap-xml')),
                 'analytics_visit': request.build_absolute_uri(reverse('analytics-visit')),
+                'analytics_visit_pixel': request.build_absolute_uri(reverse('analytics-visit-pixel')),
             },
         })
 

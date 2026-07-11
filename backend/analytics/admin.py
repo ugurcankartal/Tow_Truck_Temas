@@ -1,7 +1,33 @@
+from datetime import timedelta
+
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import SiteVisit
+
+
+class VisitedAtFilter(admin.SimpleListFilter):
+    title = 'Ziyaret zamanı'
+    parameter_name = 'visited'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('today', 'Bugün'),
+            ('7d', 'Son 7 gün'),
+            ('30d', 'Son 30 gün'),
+        )
+
+    def queryset(self, request, queryset):
+        now = timezone.now()
+        value = self.value()
+        if value == 'today':
+            return queryset.filter(visited_at__gte=now.replace(hour=0, minute=0, second=0, microsecond=0))
+        if value == '7d':
+            return queryset.filter(visited_at__gte=now - timedelta(days=7))
+        if value == '30d':
+            return queryset.filter(visited_at__gte=now - timedelta(days=30))
+        return queryset
 
 
 @admin.register(SiteVisit)
@@ -18,13 +44,10 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'is_bot',
     )
     list_filter = (
+        VisitedAtFilter,
         'is_bot',
         'device_type',
         'country',
-        'city',
-        'browser',
-        'os_name',
-        ('visited_at', admin.DateFieldListFilter),
     )
     search_fields = (
         'ip_address',
@@ -74,8 +97,8 @@ class SiteVisitAdmin(admin.ModelAdmin):
         'visited_at',
         'map_link',
     )
-    date_hierarchy = 'visited_at'
     ordering = ('-visited_at',)
+    list_per_page = 50
 
     fieldsets = (
         ('Ziyaret', {
@@ -133,9 +156,12 @@ class SiteVisitAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
     @admin.display(description='Harita')
     def map_link(self, obj: SiteVisit):
-        if obj.latitude is None or obj.longitude is None:
+        if obj is None or obj.latitude is None or obj.longitude is None:
             return '—'
         url = (
             f'https://www.openstreetmap.org/?mlat={obj.latitude}'

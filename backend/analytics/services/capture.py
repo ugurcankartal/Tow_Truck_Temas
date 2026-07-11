@@ -54,15 +54,20 @@ def _optional_str(value: Any, max_length: int) -> str:
     return str(value).strip()[:max_length]
 
 
-def _ensure_session_key(request) -> str:
+def _session_key(request, *, create: bool = False) -> str:
     if not hasattr(request, 'session'):
         return ''
-    if not request.session.session_key:
+    if create and not request.session.session_key:
         request.session.save()
-    return (request.session.session_key or '')[:64]
+    return ((request.session.session_key if hasattr(request, 'session') else '') or '')[:64]
 
 
-def extract_visit_data(request, extra: dict | None = None) -> VisitCaptureData:
+def extract_visit_data(
+    request,
+    extra: dict | None = None,
+    *,
+    session_key: str | None = None,
+) -> VisitCaptureData:
     extra = extra or {}
     ip_address = get_client_ip(request)
     user_agent = header_value(request, 'HTTP_USER_AGENT')
@@ -76,10 +81,13 @@ def extract_visit_data(request, extra: dict | None = None) -> VisitCaptureData:
         2000,
     )
 
+    if session_key is None:
+        session_key = _session_key(request, create=bool(extra.get('_create_session')))
+
     return VisitCaptureData(
         ip_address=ip_address,
         user_agent=user_agent[:5000],
-        session_key=_ensure_session_key(request),
+        session_key=session_key,
         path=path,
         full_url=full_url,
         referrer=referrer,
@@ -147,8 +155,15 @@ def record_site_visit(
     *,
     resolve_geo: bool = True,
     background: bool = False,
+    session_key: str | None = None,
 ) -> SiteVisit | None:
-    data = extract_visit_data(request, extra)
+    payload = dict(extra or {})
+    if session_key is not None:
+        payload.setdefault('_create_session', False)
+    elif payload.get('_create_session') is None and not background:
+        payload['_create_session'] = True
+
+    data = extract_visit_data(request, payload, session_key=session_key)
 
     if background:
         thread = threading.Thread(

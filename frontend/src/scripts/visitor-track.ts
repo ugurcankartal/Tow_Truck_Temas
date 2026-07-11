@@ -1,33 +1,22 @@
-const analyticsEndpoint = '/api/v1/analytics/visit/';
+const analyticsPixelEndpoint = '/api/v1/analytics/visit/pixel.gif';
 
 function recordVisit() {
   if (typeof window === 'undefined' || window.__visitTracked) return;
   window.__visitTracked = true;
 
-  const payload = {
+  const params = new URLSearchParams({
     path: window.location.pathname + window.location.search,
     full_url: window.location.href,
     referrer: document.referrer || '',
-    screen_width: window.screen?.width ?? null,
-    screen_height: window.screen?.height ?? null,
-    viewport_width: window.innerWidth ?? null,
-    viewport_height: window.innerHeight ?? null,
-  };
+    screen_width: String(window.screen?.width ?? ''),
+    screen_height: String(window.screen?.height ?? ''),
+    viewport_width: String(window.innerWidth ?? ''),
+    viewport_height: String(window.innerHeight ?? ''),
+  });
 
-  const body = JSON.stringify(payload);
-
-  if (navigator.sendBeacon) {
-    const blob = new Blob([body], { type: 'application/json' });
-    if (navigator.sendBeacon(analyticsEndpoint, blob)) return;
-  }
-
-  fetch(analyticsEndpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body,
-    keepalive: true,
-    credentials: 'same-origin',
-  }).catch(() => {});
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = `${analyticsPixelEndpoint}?${params.toString()}`;
 }
 
 recordVisit();
